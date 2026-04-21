@@ -25,14 +25,3 @@ export function getPusherClient(): PusherClient {
   }
   return pusherClientInstance;
 }
-
-export const PUSHER_EVENTS = {
-  BALL_RECORDED: 'ball-recorded',
-  INNINGS_CHANGED: 'innings-changed',
-  MATCH_COMPLETED: 'match-completed',
-  SCORE_UPDATE: 'score-update',
-} as const;
-
-export function matchChannel(matchId: string) {
-  return `match-${matchId}`;
-}
