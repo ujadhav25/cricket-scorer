@@ -39,6 +39,10 @@ export function ScoringClient({ match }: ScoringClientProps) {
   const [innings3FinalScore, setInnings3FinalScore] = React.useState<number | null>(
     () => match.innings.find((i: any) => i.inningsNumber === 3 && i.isCompleted)?.totalRuns ?? null
   );
+  // Store innings 1 batting team — needed when needsInnings2 is set before match.innings refreshes
+  const [innings1BattingTeamId, setInnings1BattingTeamId] = React.useState<string | null>(
+    () => match.innings.find((i: any) => i.inningsNumber === 1)?.battingTeamId ?? null
+  );
   // Explicit innings-2 setup flag — set when innings 1 ends, cleared when innings 2 exists on server
   const [needsInnings2, setNeedsInnings2] = React.useState(
     () => Boolean(match.innings.find((i: any) => i.inningsNumber === 1)?.isCompleted &&
@@ -115,18 +119,20 @@ export function ScoringClient({ match }: ScoringClientProps) {
   }, [serverDeliveries.length]);
 
   // Determine batting team players — swap teams for innings 2 / super over setup
+  // Use stored innings1BattingTeamId when innings 1 may not yet be in the refreshed match prop
+  const i1BattingTeamId = innings1BattingTeamId ?? innings1?.battingTeamId;
   const battingTeam = effectiveNeedsInnings2
-    ? (innings1!.battingTeamId === match.teamAId ? match.teamB : match.teamA)
+    ? (i1BattingTeamId === match.teamAId ? match.teamB : match.teamA)
     : effectiveSuperOverSetup
       // Super over innings 3: same batting order as innings 1 (original first batting team)
-      ? (innings1!.battingTeamId === match.teamAId ? match.teamA : match.teamB)
+      ? (i1BattingTeamId === match.teamAId ? match.teamA : match.teamB)
       : effectiveSuperOverInnings4Setup
         // Super over innings 4: same batting order as innings 2
-        ? (innings2!.battingTeamId === match.teamAId ? match.teamA : match.teamB)
+        ? (innings2?.battingTeamId === match.teamAId ? match.teamA : match.teamB)
         : currentInnings
           ? (currentInnings.battingTeamId === match.teamAId ? match.teamA : match.teamB)
           : match.teamA;
-  const fieldingTeam = battingTeam.id === match.teamAId ? match.teamB : match.teamA;
+  const fieldingTeam = battingTeam?.id === match.teamAId ? match.teamB : match.teamA;
 
   // Initialize store — always sync from match data (handles page refresh)
   // Reset store if navigating to a different match
@@ -332,6 +338,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
           if (activeInningsNumber === 1) {
             // End of innings 1 — save authoritative score, set up innings 2
             setInnings1FinalScore(dbTotalRuns);
+            setInnings1BattingTeamId(battingTeam.id);
             setNeedsInnings2(true);
             store.setStriker('');
             store.setNonStriker('');
@@ -340,6 +347,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
             setOptimisticDeliveries([]);
             const target = dbTotalRuns + 1;
             toast({ title: 'Innings 1 complete!', description: `Target for 2nd innings: ${target}`, variant: 'default' });
+            router.refresh();
           } else if (activeInningsNumber === 2) {
             // End of innings 2 — use DB total vs saved innings1 score for tie detection
             const inn1Score = innings1FinalScore ?? innings1?.totalRuns ?? -1;
@@ -351,6 +359,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
               store.setCurrentInnings('');
               setOptimisticDeliveries([]);
               toast({ title: "It's a Tie! 🏏", description: 'Super Over will decide the winner!', variant: 'default' });
+              router.refresh();
             } else {
               try { await fetch(`/api/matches/${match.id}/complete`, { method: 'PUT' }); } catch (_) {}
               toast({ title: 'Match complete!', variant: 'default' });
@@ -368,6 +377,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
             setOptimisticDeliveries([]);
             const soTarget = dbTotalRuns + 1;
             toast({ title: 'Super Over 1st innings done!', description: `Target: ${soTarget} runs`, variant: 'default' });
+            router.refresh();
           } else {
             // End of super over innings 4 — match complete
             try { await fetch(`/api/matches/${match.id}/complete`, { method: 'PUT' }); } catch (_) {}
@@ -427,6 +437,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
         const inningsNum = currentInnings?.inningsNumber ?? 1;
         if (inningsNum === 1) {
           setInnings1FinalScore(wicketInningsTotal);
+          setInnings1BattingTeamId(currentInnings?.battingTeamId ?? battingTeam.id);
           setNeedsInnings2(true);
           store.setStriker('');
           store.setNonStriker('');
@@ -435,6 +446,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
           setOptimisticDeliveries([]);
           const target = wicketInningsTotal + 1;
           toast({ title: 'All out! Innings 1 over.', description: `Target: ${target}`, variant: 'default' });
+          router.refresh();
         } else if (inningsNum === 2) {
           const inn1Score = innings1FinalScore ?? innings1?.totalRuns ?? -1;
           if (wicketInningsTotal === inn1Score) {
@@ -445,6 +457,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
             store.setCurrentInnings('');
             setOptimisticDeliveries([]);
             toast({ title: "All out! It's a Tie! 🏏", description: 'Super Over will decide the winner!', variant: 'default' });
+            router.refresh();
           } else {
             try { await fetch(`/api/matches/${match.id}/complete`, { method: 'PUT' }); } catch (_) {}
             toast({ title: 'All out! Match over.', variant: 'default' });
@@ -461,6 +474,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
           setOptimisticDeliveries([]);
           const soTarget = wicketInningsTotal + 1;
           toast({ title: 'All out! Super Over 1st innings done.', description: `Target: ${soTarget} runs`, variant: 'default' });
+          router.refresh();
         } else {
           try { await fetch(`/api/matches/${match.id}/complete`, { method: 'PUT' }); } catch (_) {}
           toast({ title: 'All out! Super Over done!', variant: 'default' });
@@ -504,7 +518,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
     .reduce((sum: number, od: any) => sum + (od.runs ?? 0), 0);
   const bowlerDisplayRuns = (bowlerScore?.runs ?? 0) + optimisticBowlerRuns;
 
-  const allBattingPlayers = battingTeam.players.map((tp: any) => tp.player);
+  const allBattingPlayers = (battingTeam?.players ?? []).map((tp: any) => tp.player);
   const availableBatsmen = allBattingPlayers.filter(
     (p: any) => !currentInnings?.batterScores?.some((bs: any) => bs.playerId === p.id && bs.isOut)
       && p.id !== store.strikerId
