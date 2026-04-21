@@ -18,7 +18,7 @@ const schema = z.object({
   name: z.string().min(1, 'Tournament name required'),
   format: z.enum(['LEAGUE', 'KNOCKOUT', 'GROUP_KNOCKOUT', 'BILATERAL']),
   defaultOvers: z.number().int().min(1).max(50),
-  totalMatches: z.number().int().min(1).max(9).default(3),
+  totalMatches: z.number().int().min(1).max(9),
   description: z.string().optional(),
   teamIds: z.array(z.string()).min(2, 'Add at least 2 teams'),
 });

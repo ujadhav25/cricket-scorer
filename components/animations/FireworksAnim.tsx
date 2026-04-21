@@ -84,7 +84,7 @@ export function FireworksAnim({ winnerName, matchId }: { winnerName?: string; ma
       const elapsed = ts - start;
 
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, canvas!.width, canvas!.height);
 
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];

@@ -14,12 +14,12 @@ import { useToast } from '@/components/ui/toaster';
 import { Users } from 'lucide-react';
 
 const schema = z.object({
-  teamAId: z.string({ required_error: 'Select Team A' }).min(1, 'Select Team A'),
-  teamBId: z.string({ required_error: 'Select Team B' }).min(1, 'Select Team B'),
-  overs: z.number({ invalid_type_error: 'Enter number of overs' }).int().min(1, 'Min 1 over').max(50, 'Max 50 overs'),
+  teamAId: z.string().min(1, 'Select Team A'),
+  teamBId: z.string().min(1, 'Select Team B'),
+  overs: z.number({ message: 'Enter number of overs' }).int().min(1, 'Min 1 over').max(50, 'Max 50 overs'),
   venue: z.string().optional(),
-  tossWinner: z.string({ required_error: 'Select toss winner' }).min(1, 'Select toss winner'),
-  tossDecision: z.enum(['bat', 'field'], { required_error: 'Select bat or field' }),
+  tossWinner: z.string().min(1, 'Select toss winner'),
+  tossDecision: z.enum(['bat', 'field'], { message: 'Select bat or field' }),
   matchType: z.string().optional(),
   tournamentId: z.string().optional(),
 });
