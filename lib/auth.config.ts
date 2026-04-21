@@ -7,6 +7,7 @@ export const authConfig = {
     verifyRequest: '/verify',
   },
   session: { strategy: 'jwt' as const },
+  trustHost: true,
   callbacks: {
     authorized({ auth }) {
       return !!auth?.user;

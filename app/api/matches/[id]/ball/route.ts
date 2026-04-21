@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { pusherServer, matchChannel, PUSHER_EVENTS } from '@/lib/pusher';
+import { pusherServer, matchChannel, PUSHER_EVENTS } from '@/lib/pusher-server';
 import { sseHub } from '@/lib/sse';
 import {
   getAuthSession,
