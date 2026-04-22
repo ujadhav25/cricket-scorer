@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const groups = await prisma.tournamentGroup.findMany({
     where: { tournamentId: params.id },
-    include: { groupTeams: { include: { team: true } } },
+    include: { teams: { include: { team: true } } },
     orderBy: { groupOrder: 'asc' },
   });
 
@@ -47,11 +47,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         tournamentId: params.id,
         name,
         groupOrder: (maxOrder._max.groupOrder ?? 0) + 1,
-        groupTeams: {
+        teams: {
           create: teamIds.map((teamId) => ({ teamId })),
         },
       },
-      include: { groupTeams: { include: { team: true } } },
+      include: { teams: { include: { team: true } } },
     });
 
     return NextResponse.json(group, { status: 201 });

@@ -7,7 +7,7 @@ import { Plus, Trash2, Users } from 'lucide-react';
 
 interface Team { id: string; name: string }
 interface GroupTeam { teamId: string; team: Team }
-interface Group { id: string; name: string; groupOrder: number; groupTeams: GroupTeam[] }
+interface Group { id: string; name: string; groupOrder: number; teams: GroupTeam[] }
 
 interface Props {
   tournamentId: string;
@@ -24,7 +24,7 @@ export function GroupStageManager({ tournamentId, isOwner, allTeams, groups: ini
   const [error, setError] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const assignedTeamIds = new Set(groups.flatMap((g) => g.groupTeams.map((gt) => gt.teamId)));
+  const assignedTeamIds = new Set(groups.flatMap((g) => g.teams.map((gt) => gt.teamId)));
 
   const handleCreate = async () => {
     if (!newGroupName.trim() || selectedTeams.length < 2) {
@@ -89,7 +89,7 @@ export function GroupStageManager({ tournamentId, isOwner, allTeams, groups: ini
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
               <h3 className="font-bold">{group.name}</h3>
-              <span className="text-xs text-muted-foreground">({group.groupTeams.length} teams)</span>
+              <span className="text-xs text-muted-foreground">({group.teams.length} teams)</span>
             </div>
             {isOwner && (
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-400" onClick={() => handleDelete(group.id)} disabled={loading}>
@@ -98,7 +98,7 @@ export function GroupStageManager({ tournamentId, isOwner, allTeams, groups: ini
             )}
           </div>
           <div className="p-4 flex flex-wrap gap-2">
-            {group.groupTeams.map((gt) => (
+            {group.teams.map((gt) => (
               <span key={gt.teamId} className="rounded-full border border-border bg-muted/30 px-3 py-1 text-sm font-medium">
                 {gt.team.name}
               </span>

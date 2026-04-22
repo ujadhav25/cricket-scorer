@@ -29,7 +29,7 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
     },
     include: {
       teams: { include: { team: true } },
-      groups: { include: { groupTeams: { include: { team: true } } }, orderBy: { groupOrder: 'asc' } },
+      groups: { include: { teams: { include: { team: true } } }, orderBy: { groupOrder: 'asc' } },
       matches: {
         include: {
           teamA: true, teamB: true,
