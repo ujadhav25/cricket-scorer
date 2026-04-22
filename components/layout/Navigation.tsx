@@ -28,8 +28,8 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col glass-strong md:flex">
-      <div className="flex h-16 items-center border-b border-border/30 px-6">
+    <aside className="hidden w-64 shrink-0 flex-col md:flex bg-gradient-to-b from-card/95 via-card/90 to-card/80 backdrop-blur-xl border-r border-border/20">
+      <div className="flex h-16 items-center border-b border-border/15 px-6">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <span className="text-2xl transition-transform duration-300 group-hover:rotate-12">🏏</span>
           <span className="text-lg font-bold text-gradient">CricScorer</span>

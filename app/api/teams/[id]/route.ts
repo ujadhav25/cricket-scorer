@@ -16,6 +16,7 @@ const UpdateTeamSchema = z.object({
   homeGround: z.string().optional().nullable(),
   playerIds: z.array(z.string()).min(2).max(15).optional(),
   captainEmail: z.string().email().optional().nullable(),
+  captainPlayerId: z.string().optional().nullable(),
 });
 
 export async function GET(
@@ -61,16 +62,27 @@ export async function PUT(
     });
     if (!team) return notFoundResponse('Team');
 
-    const { playerIds, captainEmail, ...teamData } = parsed.data;
+    const { playerIds, captainEmail, captainPlayerId, ...teamData } = parsed.data;
 
-    // Resolve captainEmail → captainUserId (only owner can change captain)
+    // Resolve captain → captainUserId (only owner can change captain)
     let captainUserId: string | null | undefined = undefined;
-    if (captainEmail !== undefined && team.userId === userId) {
-      if (captainEmail === null || captainEmail === '') {
-        captainUserId = null;
-      } else {
-        const captainUser = await prisma.user.findUnique({ where: { email: captainEmail }, select: { id: true } });
-        captainUserId = captainUser?.id ?? null;
+    if (team.userId === userId) {
+      if (captainPlayerId !== undefined) {
+        // Resolve player ID → user ID
+        if (captainPlayerId === null || captainPlayerId === '') {
+          captainUserId = null;
+        } else {
+          const player = await prisma.player.findUnique({ where: { id: captainPlayerId }, select: { userId: true } });
+          captainUserId = player?.userId ?? null;
+        }
+      } else if (captainEmail !== undefined) {
+        // Legacy: resolve email → user ID
+        if (captainEmail === null || captainEmail === '') {
+          captainUserId = null;
+        } else {
+          const captainUser = await prisma.user.findUnique({ where: { email: captainEmail }, select: { id: true } });
+          captainUserId = captainUser?.id ?? null;
+        }
       }
     }
 

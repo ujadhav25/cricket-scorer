@@ -14,6 +14,7 @@ const CreateTeamSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#16a34a'),
   homeGround: z.string().optional(),
   playerIds: z.array(z.string()).min(2).max(15),
+  captainPlayerId: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -45,12 +46,20 @@ export async function POST(req: NextRequest) {
     const parsed = CreateTeamSchema.safeParse(body);
     if (!parsed.success) return badRequestResponse(parsed.error.message);
 
-    const { playerIds, ...teamData } = parsed.data;
+    const { playerIds, captainPlayerId, ...teamData } = parsed.data;
+
+    // Resolve captainPlayerId → captainUserId
+    let captainUserId: string | null = null;
+    if (captainPlayerId) {
+      const player = await prisma.player.findUnique({ where: { id: captainPlayerId }, select: { userId: true } });
+      captainUserId = player?.userId ?? null;
+    }
 
     const team = await prisma.team.create({
       data: {
         ...teamData,
         userId,
+        ...(captainUserId ? { captainUserId } : {}),
         players: {
           create: playerIds.map((playerId) => ({ playerId })),
         },

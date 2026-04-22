@@ -9,16 +9,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
 import { getInitials, cn } from '@/lib/utils';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Shield } from 'lucide-react';
 
 const schema = z.object({
   name: z.string().min(1),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   homeGround: z.string().optional(),
   playerIds: z.array(z.string()).min(2).max(15),
-  captainEmail: z.string().email('Invalid email').optional().or(z.literal('')),
+  captainPlayerId: z.string().optional().or(z.literal('')),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -33,6 +34,7 @@ export default function EditTeamPage() {
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [captainPlayerId, setCaptainPlayerId] = useState<string>('');
   const [loaded, setLoaded] = useState(false);
 
   const { register, handleSubmit, setValue, reset } = useForm<FormData>({ resolver: zodResolver(schema) });
@@ -41,13 +43,19 @@ export default function EditTeamPage() {
     Promise.all([fetch(`/api/teams/${id}`).then((r) => r.json()), fetch('/api/players').then((r) => r.json())]).then(
       ([team, players]) => {
         const pids = team.players.map((tp: any) => tp.player.id);
+        // Find the captain's player record from team players
+        const captainPlayer = team.captainUser?.id
+          ? team.players.find((tp: any) => tp.player.userId === team.captainUser.id)?.player
+          : null;
+        const captainPid = captainPlayer?.id ?? '';
         reset({
           name: team.name,
           color: team.color,
           homeGround: team.homeGround ?? '',
           playerIds: pids,
-          captainEmail: team.captainUser?.email ?? '',
+          captainPlayerId: captainPid,
         });
+        setCaptainPlayerId(captainPid);
         setSelectedColor(team.color);
         setSelectedPlayerIds(pids);
         setAllPlayers(players);
@@ -60,6 +68,11 @@ export default function EditTeamPage() {
     setSelectedPlayerIds((prev) => {
       const next = prev.includes(pid) ? prev.filter((p) => p !== pid) : [...prev, pid];
       setValue('playerIds', next);
+      // Clear captain if they're being removed from team
+      if (!next.includes(captainPlayerId)) {
+        setCaptainPlayerId('');
+        setValue('captainPlayerId', '');
+      }
       return next;
     });
   }
@@ -118,10 +131,6 @@ export default function EditTeamPage() {
               <Input {...register('homeGround')} className="mt-1" />
             </div>
             <div>
-              <Label>Captain Email <span className="text-xs text-muted-foreground font-normal">(optional — the captain can manage player roster)</span></Label>
-              <Input {...register('captainEmail')} type="email" placeholder="captain@example.com" className="mt-1" />
-            </div>
-            <div>
               <Label className="mb-2 block">Color</Label>
               <div className="flex gap-2 flex-wrap">
                 {PRESET_COLORS.map((c) => (
@@ -149,6 +158,27 @@ export default function EditTeamPage() {
             </div>
           </CardContent>
         </Card>
+
+        {selectedPlayerIds.length >= 2 && (
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="h-4 w-4" /> Captain</CardTitle></CardHeader>
+            <CardContent>
+              <Select value={captainPlayerId} onValueChange={(v) => { const val = v === 'none' ? '' : v; setCaptainPlayerId(val); setValue('captainPlayerId', val); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select captain (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No captain</SelectItem>
+                  {allPlayers.filter((p) => selectedPlayerIds.includes(p.id)).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1.5 text-xs text-muted-foreground">The captain can manage the player roster</p>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="flex-1" onClick={() => router.back()}>Cancel</Button>
           <Button type="submit" className="flex-1 bg-cricket-green hover:bg-cricket-green/90" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</Button>

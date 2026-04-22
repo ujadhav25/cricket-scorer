@@ -155,7 +155,7 @@ export default function NewMatchPage() {
               <Select onValueChange={(v) => setValue('teamAId', v)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select team" /></SelectTrigger>
                 <SelectContent>
-                  {teams.map((t) => <SelectItem key={t.id} value={t.id} disabled={t.id === teamBId}>{t.name}</SelectItem>)}
+                  {teams.filter((t) => t.id !== teamBId).map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                 </SelectContent>
               </Select>
 
@@ -165,7 +165,7 @@ export default function NewMatchPage() {
               <Select onValueChange={(v) => setValue('teamBId', v)}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="Select team" /></SelectTrigger>
                 <SelectContent>
-                  {teams.map((t) => <SelectItem key={t.id} value={t.id} disabled={t.id === teamAId}>{t.name}</SelectItem>)}
+                  {teams.filter((t) => t.id !== teamAId).map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                 </SelectContent>
               </Select>
 

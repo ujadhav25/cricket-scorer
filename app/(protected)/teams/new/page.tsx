@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
 import { getInitials } from '@/lib/utils';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const schema = z.object({
@@ -19,6 +20,7 @@ const schema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   homeGround: z.string().optional(),
   playerIds: z.array(z.string()).min(2, 'Select at least 2 players').max(15, 'Max 15 players'),
+  captainPlayerId: z.string().optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -31,6 +33,7 @@ export default function NewTeamPage() {
   const [players, setPlayers] = useState<any[]>([]);
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [captainPlayerId, setCaptainPlayerId] = useState<string>('');
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -45,6 +48,10 @@ export default function NewTeamPage() {
     setSelectedPlayerIds((prev) => {
       const next = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id];
       setValue('playerIds', next);
+      if (!next.includes(captainPlayerId)) {
+        setCaptainPlayerId('');
+        setValue('captainPlayerId', '');
+      }
       return next;
     });
   }
@@ -143,6 +150,26 @@ export default function NewTeamPage() {
             )}
           </CardContent>
         </Card>
+
+        {selectedPlayerIds.length >= 2 && (
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="h-4 w-4" /> Captain</CardTitle></CardHeader>
+            <CardContent>
+              <Select value={captainPlayerId} onValueChange={(v) => { const val = v === 'none' ? '' : v; setCaptainPlayerId(val); setValue('captainPlayerId', val); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select captain (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No captain</SelectItem>
+                  {players.filter((p) => selectedPlayerIds.includes(p.id)).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1.5 text-xs text-muted-foreground">The captain can manage the player roster</p>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="flex-1" onClick={() => router.back()}>Cancel</Button>

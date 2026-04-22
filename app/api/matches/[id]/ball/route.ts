@@ -91,13 +91,19 @@ export async function POST(
     const extraRuns = (ballData.isWide || ballData.isNoBall) ? 1 : 0;
     const totalBallRuns = ballData.runs + extraRuns;
 
+    // Compute total extras for this ball (wide/noBall penalty + leg byes + byes)
+    const ballExtras = (ballData.isWide ? 1 + ballData.runs : 0)
+      + (ballData.isNoBall ? 1 : 0)
+      + (ballData.isLegBye ? ballData.runs : 0)
+      + (ballData.isBye ? ballData.runs : 0);
+
     // Update innings aggregates
     const innings = await prisma.innings.update({
       where: { id: ballData.inningsId },
       data: {
         totalRuns: { increment: totalBallRuns },
         totalWickets: { increment: ballData.isWicket ? 1 : 0 },
-        extras: { increment: isExtra ? 1 + ballData.runs : 0 },
+        extras: { increment: ballExtras },
         wides: { increment: ballData.isWide ? 1 + ballData.runs : 0 },
         noBalls: { increment: ballData.isNoBall ? 1 : 0 },
         legByes: { increment: ballData.isLegBye ? ballData.runs : 0 },

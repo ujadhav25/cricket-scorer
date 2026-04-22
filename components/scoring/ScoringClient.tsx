@@ -593,7 +593,13 @@ export function ScoringClient({ match }: ScoringClientProps) {
     }, 0);
     const totalWickets = mergedDeliveries.filter((d: any) => d.isWicket).length;
     const totalOvers = legalBalls.length / 6;
-    const extras = mergedDeliveries.filter((d: any) => d.isWide || d.isNoBall).length;
+    const extras = mergedDeliveries.reduce((s: number, d: any) => {
+      if (d.isWide) return s + 1 + d.runs;
+      if (d.isNoBall) return s + 1 + (d.isLegBye || d.isBye ? d.runs : 0);
+      if (d.isLegBye) return s + d.runs;
+      if (d.isBye) return s + d.runs;
+      return s;
+    }, 0);
     const wides = mergedDeliveries.filter((d: any) => d.isWide).reduce((s: number, d: any) => s + 1 + d.runs, 0);
     const noBalls = mergedDeliveries.filter((d: any) => d.isNoBall).length;
     const legByes = mergedDeliveries.filter((d: any) => d.isLegBye).reduce((s: number, d: any) => s + d.runs, 0);

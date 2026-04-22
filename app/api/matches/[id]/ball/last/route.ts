@@ -32,6 +32,12 @@ export async function DELETE(
     const isLegalBall = !lastDelivery.isWide && !lastDelivery.isNoBall;
     const extraRuns = isExtra ? 1 : 0;
     const totalBallRuns = lastDelivery.runs + extraRuns;
+    const batterRuns = lastDelivery.isLegBye || lastDelivery.isBye ? 0 : lastDelivery.runs;
+
+    const ballExtras = (lastDelivery.isWide ? 1 + lastDelivery.runs : 0)
+      + (lastDelivery.isNoBall ? 1 : 0)
+      + (lastDelivery.isLegBye ? lastDelivery.runs : 0)
+      + (lastDelivery.isBye ? lastDelivery.runs : 0);
 
     await prisma.$transaction([
       // Delete delivery
@@ -43,12 +49,36 @@ export async function DELETE(
         data: {
           totalRuns: { decrement: totalBallRuns },
           totalWickets: { decrement: lastDelivery.isWicket ? 1 : 0 },
-          extras: { decrement: isExtra ? 1 + lastDelivery.runs : 0 },
+          extras: { decrement: ballExtras },
           wides: { decrement: lastDelivery.isWide ? 1 + lastDelivery.runs : 0 },
           noBalls: { decrement: lastDelivery.isNoBall ? 1 : 0 },
           legByes: { decrement: lastDelivery.isLegBye ? lastDelivery.runs : 0 },
           byes: { decrement: lastDelivery.isBye ? lastDelivery.runs : 0 },
           totalOvers: { decrement: isLegalBall ? 1 / 6 : 0 },
+        },
+      }),
+
+      // Reverse batter score
+      prisma.batterScore.update({
+        where: { inningsId_playerId: { inningsId: lastDelivery.inningsId, playerId: lastDelivery.batsmanId } },
+        data: {
+          runs: { decrement: batterRuns },
+          balls: { decrement: isLegalBall ? 1 : 0 },
+          fours: { decrement: batterRuns === 4 ? 1 : 0 },
+          sixes: { decrement: batterRuns === 6 ? 1 : 0 },
+          ...(lastDelivery.isWicket && { isOut: false, dismissalType: null, dismissedById: null }),
+        },
+      }),
+
+      // Reverse bowler score
+      prisma.bowlerScore.update({
+        where: { inningsId_playerId: { inningsId: lastDelivery.inningsId, playerId: lastDelivery.bowlerId } },
+        data: {
+          overs: { decrement: isLegalBall ? 1 / 6 : 0 },
+          runs: { decrement: totalBallRuns },
+          wickets: {
+            decrement: lastDelivery.isWicket && !['RunOut'].includes(lastDelivery.wicketType ?? '') ? 1 : 0,
+          },
         },
       }),
     ]);
