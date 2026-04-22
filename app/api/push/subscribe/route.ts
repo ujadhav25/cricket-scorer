@@ -11,8 +11,8 @@ const SubscribeSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getAuthSession();
-  if (!session?.user?.id) return unauthorizedResponse();
+  const { userId } = await getAuthSession();
+  if (!userId) return unauthorizedResponse();
 
   const body = await req.json();
   const result = SubscribeSchema.safeParse(body);
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   await prisma.pushSubscription.upsert({
     where: { endpoint },
     create: {
-      userId: session.user.id,
+      userId,
       endpoint,
       p256dh,
       auth,
@@ -40,14 +40,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await getAuthSession();
-  if (!session?.user?.id) return unauthorizedResponse();
+  const { userId } = await getAuthSession();
+  if (!userId) return unauthorizedResponse();
 
   const { endpoint } = await req.json();
   if (!endpoint) return badRequestResponse('endpoint required');
 
   await prisma.pushSubscription.deleteMany({
-    where: { endpoint, userId: session.user.id },
+    where: { endpoint, userId },
   });
 
   return NextResponse.json({ success: true });

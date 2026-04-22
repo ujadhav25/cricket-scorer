@@ -9,8 +9,8 @@ const CreateGroupSchema = z.object({
 });
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getAuthSession();
-  if (!session?.user?.id) return unauthorizedResponse();
+  const { userId } = await getAuthSession();
+  if (!userId) return unauthorizedResponse();
 
   const groups = await prisma.tournamentGroup.findMany({
     where: { tournamentId: params.id },
@@ -22,11 +22,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getAuthSession();
-  if (!session?.user?.id) return unauthorizedResponse();
+  const { userId } = await getAuthSession();
+  if (!userId) return unauthorizedResponse();
 
   const tournament = await prisma.tournament.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: { id: params.id, userId },
   });
   if (!tournament) return notFoundResponse('Tournament');
 
@@ -61,11 +61,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getAuthSession();
-  if (!session?.user?.id) return unauthorizedResponse();
+  const { userId } = await getAuthSession();
+  if (!userId) return unauthorizedResponse();
 
   const tournament = await prisma.tournament.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: { id: params.id, userId },
   });
   if (!tournament) return notFoundResponse('Tournament');
 
