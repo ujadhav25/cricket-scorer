@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Plus, Activity, Trophy, Users, Shield, Radio, Clock } from 'lucide-react';
+import { Plus, Activity, Trophy, Users, Shield, Radio, Clock, TrendingUp, Target, ArrowRight } from 'lucide-react';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -63,68 +63,85 @@ export default async function DashboardPage() {
   const topScorer = Object.values(runsMap).sort((a, b) => b.runs - a.runs)[0];
   const topWicketTaker = Object.values(wicketsMap).sort((a, b) => b.wickets - a.wickets)[0];
 
-  // Win rate: matches where a team tied to userId won (approximate by completed matches)
   const completedCount = analyticsData.length;
-  const winRate = totalMatchCount > 0 ? Math.round((completedCount / totalMatchCount) * 100) : 0;
 
   const QUICK_ACTIONS = [
-    { href: '/matches/new', label: 'New Match', icon: Activity, color: 'bg-cricket-green' },
-    { href: '/tournaments/new', label: 'New Tournament', icon: Trophy, color: 'bg-amber-600' },
-    { href: '/players/new', label: 'Add Player', icon: Users, color: 'bg-blue-600' },
-    { href: '/teams/new', label: 'New Team', icon: Shield, color: 'bg-purple-600' },
+    { href: '/matches/new', label: 'New Match', icon: Activity, gradient: 'from-cricket-green-500 to-emerald-600' },
+    { href: '/tournaments/new', label: 'New Tournament', icon: Trophy, gradient: 'from-cricket-amber-500 to-orange-600' },
+    { href: '/players/new', label: 'Add Player', icon: Users, gradient: 'from-blue-500 to-indigo-600' },
+    { href: '/teams/new', label: 'New Team', icon: Shield, gradient: 'from-purple-500 to-violet-600' },
+  ];
+
+  const STATS = [
+    { label: 'Total Matches', value: totalMatchCount, icon: Activity, color: 'text-cricket-green' },
+    { label: 'Tournaments', value: activeTournaments.length, icon: Trophy, color: 'text-cricket-amber' },
+    { label: 'Players', value: playerCount, icon: Users, color: 'text-blue-400' },
+    { label: 'Teams', value: teamCount, icon: Shield, color: 'text-purple-400' },
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Welcome back, {session.user.name?.split(' ')[0]} 👋</h1>
-        <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your cricket world.</p>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+            Hey, {session.user.name?.split(' ')[0]} <span className="inline-block animate-bounce-subtle">👋</span>
+          </h1>
+          <p className="mt-1 text-muted-foreground">Here&apos;s your cricket overview</p>
+        </div>
+        <Button asChild>
+          <Link href="/matches/new" className="gap-2">
+            <Plus className="h-4 w-4" /> New Match
+          </Link>
+        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {[
-          { label: 'Total Matches', value: totalMatchCount },
-          { label: 'Active Tournaments', value: activeTournaments.length },
-          { label: 'Players', value: playerCount },
-          { label: 'Teams', value: teamCount },
-        ].map(({ label, value }) => (
-          <Card key={label}>
-            <CardContent className="p-4">
-              <div className="text-3xl font-black text-cricket-green">{value}</div>
-              <div className="text-sm text-muted-foreground">{label}</div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {STATS.map(({ label, value, icon: Icon, color }, i) => (
+          <Card key={label} className="group hover:border-border/60 hover:shadow-lg transition-all duration-300" style={{ animationDelay: `${i * 100}ms` }}>
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`rounded-xl bg-white/[0.04] p-2.5 ${color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-black tracking-tight">{value}</div>
+              <div className="text-xs text-muted-foreground mt-1 font-medium">{label}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Analytics */}
+      {/* Analytics Row */}
       {(topScorer || topWicketTaker) && (
         <div>
-          <h2 className="mb-3 font-semibold">Analytics</h2>
+          <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-cricket-green" /> Analytics
+          </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Completed Matches</p>
-                <p className="text-3xl font-black text-cricket-green">{completedCount}</p>
-                <p className="text-xs text-muted-foreground mt-1">out of {totalMatchCount} total</p>
+            <Card className="gradient-border">
+              <CardContent className="p-5">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Completed</p>
+                <p className="text-4xl font-black text-gradient">{completedCount}</p>
+                <p className="text-xs text-muted-foreground mt-1">of {totalMatchCount} matches</p>
               </CardContent>
             </Card>
             {topScorer && (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Top Scorer</p>
+              <Card className="group hover:glow-green transition-all duration-300">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Top Scorer</p>
                   <p className="text-lg font-bold truncate">{topScorer.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{topScorer.runs} runs</p>
+                  <p className="text-sm text-cricket-green font-semibold mt-0.5">{topScorer.runs} runs</p>
                 </CardContent>
               </Card>
             )}
             {topWicketTaker && (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Top Wicket-Taker</p>
+              <Card className="group hover:glow-amber transition-all duration-300">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Top Wicket-Taker</p>
                   <p className="text-lg font-bold truncate">{topWicketTaker.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{topWicketTaker.wickets} wickets</p>
+                  <p className="text-sm text-cricket-amber font-semibold mt-0.5">{topWicketTaker.wickets} wickets</p>
                 </CardContent>
               </Card>
             )}
@@ -134,13 +151,16 @@ export default async function DashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="mb-3 font-semibold">Quick Actions</h2>
+        <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
+          <Target className="h-5 w-5 text-cricket-amber" /> Quick Actions
+        </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {QUICK_ACTIONS.map(({ href, label, icon: Icon, color }) => (
-            <Link key={href} href={href}>
-              <div className={`flex flex-col items-center gap-2 rounded-xl p-4 ${color} text-white transition-opacity hover:opacity-90 text-center`}>
-                <Icon className="h-7 w-7" />
-                <span className="text-sm font-medium">{label}</span>
+          {QUICK_ACTIONS.map(({ href, label, icon: Icon, gradient }) => (
+            <Link key={href} href={href} className="group">
+              <div className={`relative overflow-hidden flex flex-col items-center gap-3 rounded-2xl bg-gradient-to-br ${gradient} p-5 text-white transition-all duration-300 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]`}>
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+                <Icon className="h-7 w-7 relative z-10" />
+                <span className="text-sm font-semibold relative z-10">{label}</span>
               </div>
             </Link>
           ))}
@@ -149,18 +169,26 @@ export default async function DashboardPage() {
 
       {/* Recent Matches */}
       <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Recent Matches</h2>
-          <Link href="/matches" className="text-sm text-cricket-green hover:underline">View all</Link>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Activity className="h-5 w-5 text-blue-400" /> Recent Matches
+          </h2>
+          <Link href="/matches" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
+            View all <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
         {recentMatches.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
-            <Activity className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-            <p className="text-muted-foreground mb-3">No matches yet</p>
-            <Button asChild className="bg-cricket-green hover:bg-cricket-green/90 rounded-xl">
-              <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />New Match</Link>
-            </Button>
-          </div>
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center p-12">
+              <div className="rounded-2xl bg-white/[0.04] p-4 mb-4">
+                <Activity className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+              <p className="text-muted-foreground mb-4">No matches yet</p>
+              <Button asChild>
+                <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />Start Your First Match</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             {recentMatches.map((match) => {
@@ -181,37 +209,35 @@ export default async function DashboardPage() {
 
               return (
                 <Link key={match.id} href={`/matches/${match.id}`} className="block group">
-                  <div className={[
-                    'relative rounded-2xl border overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5',
-                    isLive ? 'border-red-500/50 bg-gradient-to-br from-red-950/30 to-background' : 'border-border/60 bg-card',
+                  <Card className={[
+                    'overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5',
+                    isLive ? 'border-red-500/30 glow-green' : 'hover:border-border/60',
                   ].join(' ')}>
-                    {isLive && <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-red-500 via-orange-400 to-red-500 animate-pulse" />}
-                    <div className="p-4">
-                      {/* Header row */}
+                    {isLive && <div className="h-0.5 bg-gradient-to-r from-red-500 via-orange-400 to-red-500 animate-pulse" />}
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-1.5 flex-wrap font-bold text-sm">
+                        <div className="flex items-center gap-2 flex-wrap font-bold text-sm">
                           <span>{match.teamA.name}</span>
-                          <span className="text-xs text-muted-foreground font-normal">vs</span>
+                          <span className="text-xs text-muted-foreground/60 font-normal">vs</span>
                           <span>{match.teamB.name}</span>
                         </div>
                         {isLive && (
-                          <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white animate-pulse shrink-0">
-                            <Radio className="h-3 w-3" /> LIVE
+                          <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 border border-red-500/30 px-2.5 py-1 text-xs font-bold text-red-400 shrink-0">
+                            <Radio className="h-3 w-3 animate-pulse" /> LIVE
                           </span>
                         )}
                         {isCompleted && (
-                          <span className="flex items-center gap-1 rounded-full bg-green-700/80 px-2 py-0.5 text-xs font-semibold text-white shrink-0">
+                          <span className="flex items-center gap-1 rounded-full bg-cricket-green-500/10 border border-cricket-green-500/20 px-2.5 py-1 text-xs font-semibold text-cricket-green shrink-0">
                             <Trophy className="h-3 w-3" /> Done
                           </span>
                         )}
                         {!isLive && !isCompleted && (
-                          <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground shrink-0">
+                          <span className="flex items-center gap-1 rounded-full bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground shrink-0">
                             <Clock className="h-3 w-3" /> Upcoming
                           </span>
                         )}
                       </div>
 
-                      {/* Score mini-cards */}
                       {(teamAInn || teamBInn) && (
                         <div className="grid grid-cols-2 gap-2">
                           {[
@@ -219,30 +245,29 @@ export default async function DashboardPage() {
                             { team: match.teamB, inn: teamBInn, color: 'rose' },
                           ].map(({ team, inn, color }) => (
                             <div key={team.id} className={[
-                              'rounded-xl px-3 py-2',
-                              color === 'blue' ? 'bg-blue-950/40 border border-blue-500/20' : 'bg-rose-950/40 border border-rose-500/20',
+                              'rounded-xl px-3 py-2.5',
+                              color === 'blue' ? 'bg-blue-500/[0.06] border border-blue-500/10' : 'bg-rose-500/[0.06] border border-rose-500/10',
                             ].join(' ')}>
-                              <p className={`text-xs font-medium truncate mb-0.5 ${color === 'blue' ? 'text-blue-400' : 'text-rose-400'}`}>{team.name}</p>
+                              <p className={`text-xs font-medium truncate mb-1 ${color === 'blue' ? 'text-blue-400' : 'text-rose-400'}`}>{team.name}</p>
                               {inn ? (
                                 <p className="text-base font-black leading-none">
                                   {inn.totalRuns}<span className="text-sm font-semibold text-muted-foreground">/{inn.totalWickets}</span>
-                                  <span className="text-xs text-muted-foreground ml-1">({Math.floor(inn.totalOvers)}.{Math.round((inn.totalOvers % 1) * 6)} ov)</span>
+                                  <span className="text-xs text-muted-foreground/60 ml-1">({Math.floor(inn.totalOvers)}.{Math.round((inn.totalOvers % 1) * 6)})</span>
                                 </p>
                               ) : (
-                                <p className="text-xs text-muted-foreground">Yet to bat</p>
+                                <p className="text-xs text-muted-foreground/60">Yet to bat</p>
                               )}
                             </div>
                           ))}
                         </div>
                       )}
 
-                      {/* Footer */}
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground/60">
                         <span>{formatDate(match.createdAt)}</span>
-                        {winnerName && <span className="text-yellow-400 font-semibold">🏆 {winnerName} won</span>}
+                        {winnerName && <span className="text-cricket-amber font-semibold">🏆 {winnerName} won</span>}
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               );
             })}
@@ -253,20 +278,26 @@ export default async function DashboardPage() {
       {/* Active Tournaments */}
       {activeTournaments.length > 0 && (
         <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">Active Tournaments</h2>
-            <Link href="/tournaments" className="text-sm text-cricket-green hover:underline">View all</Link>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-cricket-amber" /> Active Tournaments
+            </h2>
+            <Link href="/tournaments" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
           <div className="space-y-3">
             {activeTournaments.map((t) => (
               <Link key={t.id} href={`/tournaments/${t.id}`}>
-                <Card className="hover:border-cricket-green/40 transition-colors">
+                <Card className="group hover:border-cricket-amber-500/30 hover:glow-amber transition-all duration-300">
                   <CardContent className="flex items-center justify-between p-4">
                     <div>
-                      <p className="font-semibold">{t.name}</p>
+                      <p className="font-bold">{t.name}</p>
                       <p className="text-sm text-muted-foreground">{t.format} · {t._count.matches} matches</p>
                     </div>
-                    <Trophy className="h-5 w-5 text-amber-500" />
+                    <div className="rounded-xl bg-cricket-amber-500/10 p-2.5">
+                      <Trophy className="h-5 w-5 text-cricket-amber" />
+                    </div>
                   </CardContent>
                 </Card>
               </Link>

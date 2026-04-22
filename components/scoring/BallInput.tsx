@@ -21,11 +21,11 @@ type ExtraMode = 'wide' | 'noBall' | 'legBye' | 'bye' | null;
 
 const EXTRA_RUN_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
 
-const EXTRA_META: Record<NonNullable<ExtraMode>, { label: string; color: string; note: string }> = {
-  wide:   { label: 'Wide',    color: 'bg-yellow-600',  note: 'Select extra runs off the wide' },
-  noBall: { label: 'No Ball', color: 'bg-orange-600',  note: 'Select runs scored off the no ball' },
-  legBye: { label: 'Leg Bye', color: 'bg-purple-600',  note: 'Select leg bye runs' },
-  bye:    { label: 'Bye',     color: 'bg-indigo-600',  note: 'Select bye runs' },
+const EXTRA_META: Record<NonNullable<ExtraMode>, { label: string; gradient: string; border: string; bg: string; note: string }> = {
+  wide:   { label: 'Wide',    gradient: 'from-yellow-500 to-yellow-600', border: 'border-yellow-500/30', bg: 'bg-yellow-500/[0.06]', note: 'Select extra runs off the wide' },
+  noBall: { label: 'No Ball', gradient: 'from-orange-500 to-orange-600', border: 'border-orange-500/30', bg: 'bg-orange-500/[0.06]', note: 'Select runs scored off the no ball' },
+  legBye: { label: 'Leg Bye', gradient: 'from-purple-500 to-purple-600', border: 'border-purple-500/30', bg: 'bg-purple-500/[0.06]', note: 'Select leg bye runs' },
+  bye:    { label: 'Bye',     gradient: 'from-indigo-500 to-indigo-600', border: 'border-indigo-500/30', bg: 'bg-indigo-500/[0.06]', note: 'Select bye runs' },
 };
 
 export function BallInput({ onBall, disabled }: BallInputProps) {
@@ -37,7 +37,6 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
 
   function handleExtraSelect(mode: ExtraMode) {
     if (mode === 'wide') {
-      // Wide is always 1 run penalty, no extra runs off bat
       onBall({ runs: 0, isWide: true });
       return;
     }
@@ -59,32 +58,28 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
 
   return (
     <div className="space-y-3">
-      {/* Extra run picker — shown when an extra type is selected */}
+      {/* Extra run picker */}
       {extraMode && meta && (
-        <div className={`rounded-xl border-2 p-3 space-y-2 ${
-          extraMode === 'wide'   ? 'border-yellow-600/50 bg-yellow-950/20' :
-          extraMode === 'noBall' ? 'border-orange-600/50 bg-orange-950/20' :
-          extraMode === 'legBye' ? 'border-purple-600/50 bg-purple-950/20' :
-                                   'border-indigo-600/50 bg-indigo-950/20'
-        }`}>
+        <div className={`rounded-2xl border ${meta.border} ${meta.bg} p-4 space-y-3 animate-scale-in`}>
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">{meta.label} — {meta.note}</p>
+            <p className="text-sm font-bold">{meta.label} — {meta.note}</p>
             <button
               onClick={() => setExtraMode(null)}
-              className="text-xs text-muted-foreground hover:text-foreground px-2 py-0.5 rounded"
+              className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
               ✕ Cancel
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-1.5">
+          <div className="grid grid-cols-7 gap-2">
             {EXTRA_RUN_OPTIONS.map((r) => (
               <button
                 key={r}
                 onClick={() => handleExtraRuns(r)}
                 disabled={disabled}
                 className={cn(
-                  'h-11 rounded-lg text-base font-bold transition-all active:scale-95 disabled:opacity-50',
-                  meta.color, 'text-white hover:opacity-80'
+                  'h-12 rounded-xl text-base font-bold text-white transition-all duration-200 active:scale-90 disabled:opacity-50',
+                  `bg-gradient-to-b ${meta.gradient}`,
+                  'shadow-md hover:shadow-lg hover:brightness-110'
                 )}
               >
                 {r}
@@ -94,20 +89,20 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
         </div>
       )}
 
-      {/* Main run buttons — hidden while picking extra runs */}
+      {/* Main run buttons */}
       {!extraMode && (
         <>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
             {([0,1,2,3,4,6] as const).map((runs) => (
               <button
                 key={runs}
                 onClick={() => handleMain(runs)}
                 disabled={disabled}
                 className={cn(
-                  'flex h-16 items-center justify-center rounded-xl text-2xl font-bold transition-all active:scale-95 disabled:opacity-50',
-                  runs === 4 ? 'bg-blue-600 text-white hover:bg-blue-700' :
-                  runs === 6 ? 'bg-green-600 text-white hover:bg-green-700' :
-                  'bg-muted text-foreground hover:bg-muted/80'
+                  'relative flex h-16 items-center justify-center rounded-2xl text-2xl font-black transition-all duration-200 active:scale-90 disabled:opacity-50',
+                  runs === 4 ? 'bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30' :
+                  runs === 6 ? 'bg-gradient-to-b from-cricket-green-500 to-cricket-green-600 text-white shadow-lg shadow-cricket-green-500/20 hover:shadow-xl hover:shadow-cricket-green-500/30' :
+                  'bg-white/[0.04] border border-border/40 text-foreground hover:bg-white/[0.08] hover:border-border/60'
                 )}
               >
                 {runs}
@@ -119,29 +114,30 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
           <button
             onClick={() => onBall({ runs: 0, isWicket: true })}
             disabled={disabled}
-            className="h-14 w-full rounded-xl bg-red-600 text-xl font-bold text-white transition-all hover:bg-red-700 active:scale-95 disabled:opacity-50"
+            className="h-14 w-full rounded-2xl bg-gradient-to-r from-red-500 to-red-600 text-xl font-black text-white shadow-lg shadow-red-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-red-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
             W — Wicket
           </button>
         </>
       )}
 
-      {/* Extras row — always visible, highlights active */}
+      {/* Extras row */}
       <div className="grid grid-cols-4 gap-2">
-        {([ 
-          { key: 'wide'   as ExtraMode, label: 'Wd', className: 'bg-yellow-600 hover:bg-yellow-700' },
-          { key: 'noBall' as ExtraMode, label: 'Nb', className: 'bg-orange-600 hover:bg-orange-700' },
-          { key: 'legBye' as ExtraMode, label: 'Lb', className: 'bg-purple-600 hover:bg-purple-700' },
-          { key: 'bye'    as ExtraMode, label: 'B',  className: 'bg-indigo-600 hover:bg-indigo-700' },
-        ]).map(({ key, label, className }) => (
+        {([
+          { key: 'wide'   as ExtraMode, label: 'Wd', gradient: 'from-yellow-500 to-yellow-600', shadow: 'shadow-yellow-500/20' },
+          { key: 'noBall' as ExtraMode, label: 'Nb', gradient: 'from-orange-500 to-orange-600', shadow: 'shadow-orange-500/20' },
+          { key: 'legBye' as ExtraMode, label: 'Lb', gradient: 'from-purple-500 to-purple-600', shadow: 'shadow-purple-500/20' },
+          { key: 'bye'    as ExtraMode, label: 'B',  gradient: 'from-indigo-500 to-indigo-600', shadow: 'shadow-indigo-500/20' },
+        ]).map(({ key, label, gradient, shadow }) => (
           <button
             key={label}
             onClick={() => handleExtraSelect(key)}
             disabled={disabled}
             className={cn(
-              'h-11 rounded-lg text-sm font-semibold text-white transition-all active:scale-95 disabled:opacity-50',
-              className,
-              extraMode === key ? 'ring-2 ring-white ring-offset-1 ring-offset-background scale-95' : ''
+              'h-11 rounded-xl text-sm font-bold text-white transition-all duration-200 active:scale-90 disabled:opacity-50',
+              `bg-gradient-to-b ${gradient} shadow-md ${shadow}`,
+              'hover:shadow-lg hover:brightness-110',
+              extraMode === key ? 'ring-2 ring-white/50 ring-offset-1 ring-offset-background scale-95' : ''
             )}
           >
             {label}

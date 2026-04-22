@@ -29,10 +29,10 @@ const Toast = React.forwardRef<
   <ToastPrimitives.Root
     ref={ref}
     className={cn(
-      'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
-      variant === 'destructive' && 'border-destructive bg-destructive text-destructive-foreground',
-      variant === 'success' && 'border-green-700 bg-green-800 text-white',
-      variant === 'default' && 'border-border bg-background text-foreground',
+      'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl border p-5 pr-8 shadow-2xl backdrop-blur-xl transition-all',
+      variant === 'destructive' && 'border-red-500/30 bg-red-950/80 text-red-50',
+      variant === 'success' && 'border-cricket-green-500/30 bg-cricket-green-950/80 text-green-50',
+      variant === 'default' && 'border-border/40 bg-card/90 text-foreground',
       className
     )}
     {...props}
