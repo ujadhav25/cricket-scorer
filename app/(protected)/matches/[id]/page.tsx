@@ -4,10 +4,13 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { formatDate, calcStrikeRate, calcBowlingEconomy, formatOvers, legalBallCount, legalBallCountForBowler } from '@/lib/utils';
-import { Activity } from 'lucide-react';
+import { Activity, Edit } from 'lucide-react';
 import DeleteMatchButton from './DeleteMatchButton';
 import { FireworksAnim } from '@/components/animations/FireworksAnim';
 import { ShareMatchButton } from '@/components/ShareMatchButton';
+import { MatchCharts } from '@/components/MatchCharts';
+import { PushSubscribeButton } from '@/components/PushSubscribeButton';
+import { CastButton } from '@/components/CastButton';
 
 export default async function MatchDetailPage({ params }: { params: { id: string } }) {
   const session = await auth();
@@ -31,7 +34,11 @@ export default async function MatchDetailPage({ params }: { params: { id: string
           batterScores: { include: { player: true }, orderBy: { battingOrder: 'asc' } },
           bowlerScores: { include: { player: true } },
           battingTeam: true,
-          deliveries: { select: { overNumber: true, isWide: true, isNoBall: true, bowlerId: true } },
+          deliveries: { 
+            select: { overNumber: true, ballNumber: true, isWide: true, isNoBall: true, bowlerId: true, isWicket: true, batsmanId: true, runs: true },
+            orderBy: [{ overNumber: 'asc' }, { ballNumber: 'asc' }]
+          },
+          partnerships: { orderBy: { id: 'asc' } },
         },
         orderBy: { inningsNumber: 'asc' },
       },
@@ -103,6 +110,13 @@ export default async function MatchDetailPage({ params }: { params: { id: string
               <Link href={`/matches/${match.id}/score`}><Activity className="mr-1.5 h-4 w-4" />Score</Link>
             </Button>
           )}
+          {match.userId === session.user.id && (
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/matches/${match.id}/edit`}><Edit className="mr-1.5 h-4 w-4" />Edit</Link>
+            </Button>
+          )}
+          <CastButton matchId={match.id} />
+          <PushSubscribeButton matchId={match.id} />
           <ShareMatchButton shareToken={match.shareToken} matchTitle={`${match.teamA.name} vs ${match.teamB.name}`} />
           {match.userId === session.user.id && <DeleteMatchButton matchId={match.id} />}
         </div>
@@ -217,10 +231,96 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                   </tbody>
                 </table>
               </div>
+
+              {/* Fall of Wickets */}
+              {(() => {
+                let cumRuns = 0;
+                let cumLegal = 0;
+                const fow: { wicketNum: number; runs: number; over: string; batsmanName: string }[] = [];
+                for (const d of inn.deliveries) {
+                  const isLegal = !d.isWide && !d.isNoBall;
+                  const extraPenalty = d.isWide || d.isNoBall ? 1 : 0;
+                  cumRuns += d.runs + extraPenalty;
+                  if (isLegal) cumLegal++;
+                  if (d.isWicket) {
+                    const overNum = Math.floor(cumLegal / 6);
+                    const ballInOver = cumLegal % 6;
+                    const batter = inn.batterScores.find((bs: any) => bs.playerId === d.batsmanId);
+                    fow.push({
+                      wicketNum: fow.length + 1,
+                      runs: cumRuns,
+                      over: `${overNum}.${ballInOver}`,
+                      batsmanName: batter?.player?.name ?? 'Unknown',
+                    });
+                  }
+                }
+                if (fow.length === 0) return null;
+                return (
+                  <>
+                    <div className={`border-t ${isTeamA ? 'border-blue-500/20' : 'border-rose-500/20'}`} />
+                    <div>
+                      <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>Fall of Wickets</p>
+                      <div className="flex flex-wrap gap-2">
+                        {fow.map((f) => (
+                          <div key={f.wicketNum} className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-white/[0.03] px-2.5 py-1.5">
+                            <span className="text-xs font-black text-muted-foreground">{f.wicketNum}</span>
+                            <span className="text-xs font-bold">{f.runs}</span>
+                            <span className="text-[10px] text-muted-foreground">({f.over} ov)</span>
+                            <span className="text-[10px] text-muted-foreground">· {f.batsmanName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* Partnerships */}
+              {(inn as any).partnerships?.length > 0 && (
+                <>
+                  <div className={`border-t ${isTeamA ? 'border-blue-500/20' : 'border-rose-500/20'}`} />
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>Partnerships</p>
+                    <div className="space-y-1.5">
+                      {(inn as any).partnerships.map((p: any, idx: number) => {
+                        const b1 = inn.batterScores.find((bs: any) => bs.playerId === p.batsman1Id)?.player?.name ?? 'P1';
+                        const b2 = inn.batterScores.find((bs: any) => bs.playerId === p.batsman2Id)?.player?.name ?? 'P2';
+                        const pairLabel = b1 === b2 ? b1 : `${b1} & ${b2}`;
+                        return (
+                          <div key={p.id} className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">{idx + 1}. {pairLabel}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="font-bold">{p.runs} runs</span>
+                              <span className="text-muted-foreground">{p.balls} balls</span>
+                              {!p.isUnbroken && <span className="text-red-400 text-[10px]">Broken</span>}
+                              {p.isUnbroken && <span className="text-cricket-green text-[10px]">Active</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
       })}
+
+      {/* Worm & Manhattan Charts */}
+      <MatchCharts
+        innings={match.innings.map((inn) => ({
+          inningsNumber: inn.inningsNumber,
+          teamName: inn.battingTeam.name,
+          totalRuns: inn.totalRuns,
+          deliveries: inn.deliveries.map((d: any) => ({
+            overNumber: d.overNumber,
+            runs: d.runs,
+            isWide: d.isWide,
+            isNoBall: d.isNoBall,
+          })),
+        }))}
+      />
     </div>
   );
 }

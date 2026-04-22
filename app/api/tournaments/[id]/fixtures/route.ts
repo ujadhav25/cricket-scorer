@@ -156,3 +156,57 @@ export async function PUT(
     return serverErrorResponse(error);
   }
 }
+
+// POST — same as PUT but returns { count } for the client button
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { userId } = await getAuthSession();
+  if (!userId) return unauthorizedResponse();
+
+  try {
+    const tournament = await prisma.tournament.findFirst({
+      where: { id: params.id, userId },
+      include: { teams: true },
+    });
+    if (!tournament) return notFoundResponse('Tournament');
+    if (tournament.teams.length < 2) {
+      return badRequestResponse('Tournament needs at least 2 teams to generate fixtures');
+    }
+
+    const teams = tournament.teams;
+    let fixtures: any[] = [];
+
+    if (tournament.format === 'LEAGUE') {
+      fixtures = generateLeagueFixtures(teams, params.id, userId, tournament.defaultOvers);
+    } else if (tournament.format === 'KNOCKOUT') {
+      fixtures = generateKnockoutFixtures(teams, params.id, userId, tournament.defaultOvers);
+    } else if (tournament.format === 'BILATERAL') {
+      const [t1, t2] = teams;
+      const count = (tournament as any).totalMatches ?? 3;
+      for (let i = 0; i < count; i++) {
+        fixtures.push({ tournamentId: params.id, userId, teamAId: t1.teamId, teamBId: t2.teamId, overs: tournament.defaultOvers, matchType: 'Tournament', status: 'UPCOMING' });
+      }
+    } else {
+      const half = Math.floor(teams.length / 2);
+      fixtures = [
+        ...generateLeagueFixtures(teams.slice(0, half), params.id, userId, tournament.defaultOvers),
+        ...generateLeagueFixtures(teams.slice(half), params.id, userId, tournament.defaultOvers),
+      ];
+    }
+
+    // Skip pairs that already have a match
+    const existing = await prisma.match.findMany({
+      where: { tournamentId: params.id },
+      select: { teamAId: true, teamBId: true },
+    });
+    const existingPairs = new Set(existing.map((m) => `${m.teamAId}|${m.teamBId}`));
+    const toCreate = fixtures.filter((f) => !existingPairs.has(`${f.teamAId}|${f.teamBId}`) && !existingPairs.has(`${f.teamBId}|${f.teamAId}`));
+
+    const created = await prisma.match.createMany({ data: toCreate });
+    return NextResponse.json({ count: created.count });
+  } catch (error) {
+    return serverErrorResponse(error);
+  }
+}

@@ -76,10 +76,15 @@ export async function POST(req: NextRequest) {
       return badRequestResponse('Team A and Team B must be different');
     }
 
-    const { playingXI_A: _a, playingXI_B: _b, ...matchData } = parsed.data;
+    const { playingXI_A, playingXI_B, ...matchData } = parsed.data;
 
     const match = await prisma.match.create({
-      data: { ...matchData, userId },
+      data: {
+        ...matchData,
+        userId,
+        playingXI_A: playingXI_A ?? [],
+        playingXI_B: playingXI_B ?? [],
+      },
       include: { teamA: true, teamB: true },
     });
 

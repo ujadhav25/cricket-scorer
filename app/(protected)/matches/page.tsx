@@ -63,7 +63,7 @@ export default async function MatchesPage() {
             }`}>
               {teamName.substring(0, 2).toUpperCase()}
             </div>
-            <span className={`font-semibold truncate ${isWinner ? 'text-foreground' : 'text-foreground/80'}`}>
+            <span className={`font-semibold truncate ${isWinner ? 'text-foreground' : 'text-foreground/90'}`}>
               {teamName}
             </span>
             {isWinner && <Trophy className="h-3.5 w-3.5 text-cricket-green shrink-0" />}
@@ -71,15 +71,15 @@ export default async function MatchesPage() {
           <div className="text-right shrink-0">
             {inn ? (
               <div className="flex items-baseline gap-0.5">
-                <span className={`text-xl font-black tabular-nums ${isWinner ? 'text-foreground' : 'text-foreground/80'}`}>
+                <span className={`text-xl font-black tabular-nums ${isWinner ? 'text-foreground' : 'text-foreground/90'}`}>
                   {inn.totalRuns}/{inn.totalWickets}
                 </span>
-                <span className="text-xs text-muted-foreground/50 ml-1">
+                <span className="text-xs text-muted-foreground ml-1">
                   ({Math.floor(inn.totalOvers)}.{Math.round((inn.totalOvers % 1) * 6)} ov)
                 </span>
               </div>
             ) : (
-              <span className="text-sm text-muted-foreground/40">Yet to bat</span>
+              <span className="text-sm text-muted-foreground">Yet to bat</span>
             )}
           </div>
         </div>
@@ -105,7 +105,7 @@ export default async function MatchesPage() {
           <div className="px-4 py-3.5">
             {/* Top bar: date, venue, status badge */}
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/50">
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span>{formatDate(match.createdAt)}</span>
                 {match.venue && <><span>·</span><span>{match.venue}</span></>}
                 {match.tournament && <><span>·</span><span className="text-cricket-amber font-medium">{match.tournament.name}</span></>}
@@ -161,7 +161,7 @@ export default async function MatchesPage() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Matches</h1>
-          <p className="text-sm text-muted-foreground/60 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {matches.length} {matches.length === 1 ? 'match' : 'matches'}
             {live.length > 0 && <span className="text-red-400 font-medium"> · {live.length} live now</span>}
           </p>
@@ -194,7 +194,7 @@ export default async function MatchesPage() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                 </div>
                 <h2 className="text-xs font-bold uppercase tracking-wider text-red-400">Live</h2>
-                <span className="text-xs text-muted-foreground/30">{live.length}</span>
+                <span className="text-xs text-muted-foreground/60">{live.length}</span>
               </div>
               <div className="space-y-2">
                 {live.map((m) => <MatchCard key={m.id} match={m} />)}
@@ -205,8 +205,8 @@ export default async function MatchesPage() {
             <section className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <Clock className="h-3 w-3 text-muted-foreground/40" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">Upcoming</h2>
-                <span className="text-xs text-muted-foreground/30">{upcoming.length}</span>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Upcoming</h2>
+                <span className="text-xs text-muted-foreground/60">{upcoming.length}</span>
               </div>
               <div className="space-y-2">
                 {upcoming.map((m) => <MatchCard key={m.id} match={m} />)}
@@ -217,8 +217,8 @@ export default async function MatchesPage() {
             <section className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <Trophy className="h-3 w-3 text-muted-foreground/40" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50">Completed</h2>
-                <span className="text-xs text-muted-foreground/30">{completed.length}</span>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Completed</h2>
+                <span className="text-xs text-muted-foreground/60">{completed.length}</span>
               </div>
               <div className="space-y-2">
                 {completed.map((m) => <MatchCard key={m.id} match={m} />)}

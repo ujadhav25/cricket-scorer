@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
-const DISMISSAL_TYPES = ['Bowled', 'Caught', 'LBW', 'RunOut', 'Stumped', 'HitWicket'];
+const DISMISSAL_TYPES = ['Bowled', 'Caught', 'LBW', 'RunOut', 'Stumped', 'HitWicket', 'RetiredHurt', 'RetiredOut'];
+
+// RetiredHurt = batsman leaves (injury), counted NOT out, can return
+// RetiredOut = batsman retires, counted as out
+const RETIRED_TYPES = ['RetiredHurt', 'RetiredOut'];
 
 interface Player {
   id: string;
@@ -20,6 +24,7 @@ interface WicketModalProps {
     wicketType: string;
     fielderId?: string;
     nextBatsmanId: string;
+    isRetiredHurt?: boolean;
   }) => void;
   fieldingPlayers: Player[];
   availableBatsmen: Player[];
@@ -39,15 +44,17 @@ export function WicketModal({
   const [nextBatsmanId, setNextBatsmanId] = useState<string>('');
 
   const needsFielder = ['Caught', 'RunOut', 'Stumped'].includes(wicketType);
+  const isRetired = RETIRED_TYPES.includes(wicketType);
   const isLastWicket = availableBatsmen.length === 0;
 
   function handleConfirm() {
-    // If last wicket, no next batsman needed — pass empty string, caller handles innings end
-    if (!isLastWicket && !nextBatsmanId) return;
+    if (!isLastWicket && !isRetired && !nextBatsmanId) return;
+    if (isRetired && !nextBatsmanId && availableBatsmen.length > 0) return;
     onConfirm({
       wicketType,
       fielderId: needsFielder && fielderId ? fielderId : undefined,
       nextBatsmanId: isLastWicket ? '' : nextBatsmanId,
+      isRetiredHurt: wicketType === 'RetiredHurt',
     });
     setWicketType('Bowled');
     setFielderId('');
@@ -71,14 +78,23 @@ export function WicketModal({
                   onClick={() => setWicketType(type)}
                   className={`rounded-lg border py-2 text-sm font-medium transition-colors ${
                     wicketType === type
-                      ? 'border-red-500 bg-red-600 text-white'
+                      ? RETIRED_TYPES.includes(type)
+                        ? 'border-amber-500 bg-amber-600 text-white'
+                        : 'border-red-500 bg-red-600 text-white'
                       : 'border-border text-muted-foreground hover:border-red-400'
                   }`}
                 >
-                  {type}
+                  {type === 'RetiredHurt' ? 'Ret. Hurt' : type === 'RetiredOut' ? 'Ret. Out' : type}
                 </button>
               ))}
             </div>
+            {isRetired && (
+              <p className="text-xs text-amber-400 mt-2">
+                {wicketType === 'RetiredHurt'
+                  ? '⚠️ Retired Hurt — batsman leaves due to injury, NOT counted as out.'
+                  : '⚠️ Retired Out — batsman retires voluntarily, counted as OUT.'}
+              </p>
+            )}
           </div>
 
           {needsFielder && (
@@ -98,7 +114,7 @@ export function WicketModal({
           )}
 
           <div>
-            <Label className="mb-1 block">Next Batsman</Label>
+            <Label className="mb-1 block">{isRetired ? 'Next Batsman (replacement)' : 'Next Batsman'}</Label>
             {isLastWicket ? (
               <p className="text-sm text-red-400 font-semibold py-2">All out! No more batsmen available.</p>
             ) : (
@@ -118,10 +134,10 @@ export function WicketModal({
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
             <Button
-              variant="destructive"
-              className="flex-1"
+              variant={isRetired ? 'outline' : 'destructive'}
+              className={`flex-1 ${isRetired ? 'border-amber-500 text-amber-400 hover:bg-amber-500/10' : ''}`}
               onClick={handleConfirm}
-              disabled={!isLastWicket && !nextBatsmanId}
+              disabled={!isLastWicket && !isRetired && !nextBatsmanId}
             >
               Confirm
             </Button>

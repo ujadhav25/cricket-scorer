@@ -13,8 +13,21 @@ export default async function ScorePage({ params }: { params: { id: string } }) 
       userId: session.user.id,
     },
     include: {
-      teamA: { include: { players: { include: { player: true } } } },
-      teamB: { include: { players: { include: { player: true } } } },
+      teamA: {
+        include: {
+          players: {
+            include: { player: true },
+            // Filter will be applied below after fetching match
+          },
+        },
+      },
+      teamB: {
+        include: {
+          players: {
+            include: { player: true },
+          },
+        },
+      },
       innings: {
         include: {
           deliveries: { orderBy: [{ overNumber: 'asc' }, { ballNumber: 'asc' }] },
@@ -29,5 +42,22 @@ export default async function ScorePage({ params }: { params: { id: string } }) 
 
   if (!match) notFound();
 
-  return <ScoringClient match={match} />;
+  // If a playing XI was selected at match creation, restrict to those players only
+  const filteredMatch = {
+    ...match,
+    teamA: {
+      ...match.teamA,
+      players: (match.playingXI_A ?? []).length > 0
+        ? match.teamA.players.filter((tp) => (match.playingXI_A ?? []).includes(tp.player.id))
+        : match.teamA.players,
+    },
+    teamB: {
+      ...match.teamB,
+      players: (match.playingXI_B ?? []).length > 0
+        ? match.teamB.players.filter((tp) => (match.playingXI_B ?? []).includes(tp.player.id))
+        : match.teamB.players,
+    },
+  };
+
+  return <ScoringClient match={filteredMatch} />;
 }

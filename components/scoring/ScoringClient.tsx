@@ -293,7 +293,36 @@ export function ScoringClient({ match }: ScoringClientProps) {
       if (!res.ok) throw new Error('Failed to record ball');
 
       // Use DB-returned innings total — ground truth, immune to stale client state
-      const { innings: updatedInnings } = await res.json();
+      // Status 202 means the ball was queued offline — skip DB state update
+      const responseData = await res.json();
+      if (responseData.queued) {
+        // Offline: optimistically update display and continue
+        setOptimisticDeliveries((prev) => [
+          ...prev,
+          {
+            overNumber: derivedCurrentOver,
+            ballNumber: nextBall,
+            runs: event.runs,
+            isWide: event.isWide ?? false,
+            isNoBall: event.isNoBall ?? false,
+            isWicket: false,
+            bowlerId: store.currentBowlerId ?? '',
+            batsmanId: store.strikerId ?? '',
+          },
+        ]);
+        if (event.runs === 4) triggerAnim('four');
+        else if (event.runs === 6) triggerAnim('six');
+        const label = event.isWide ? 'Wide' : event.isNoBall ? 'No Ball' : event.isLegBye ? 'Leg Bye' : event.isBye ? 'Bye' : `${event.runs} run${event.runs !== 1 ? 's' : ''}`;
+        toast({ title: `${label} (queued)`, variant: 'default' });
+        if (!event.isWide && !event.isNoBall && event.runs % 2 === 1) store.rotateStrike();
+        if (!event.isWide && !event.isNoBall) {
+          if (nextBall === 6) { store.rotateStrike(); store.setOver(derivedCurrentOver + 1, 0); store.setBowler(''); }
+          else store.setOver(derivedCurrentOver, nextBall);
+        }
+        store.setIsSubmitting(false);
+        return;
+      }
+      const { innings: updatedInnings } = responseData;
       const dbTotalRuns: number = updatedInnings.totalRuns;
 
       // Optimistically add ball to display immediately
@@ -318,6 +347,20 @@ export function ScoringClient({ match }: ScoringClientProps) {
       // Toast
       const label = event.isWide ? 'Wide' : event.isNoBall ? 'No Ball' : event.isLegBye ? 'Leg Bye' : event.isBye ? 'Bye' : `${event.runs} run${event.runs !== 1 ? 's' : ''}`;
       toast({ title: label, variant: 'default' });
+
+      // Milestone detection — check if batter crossed 50 or 100
+      if (!event.isWide && !event.isNoBall && !event.isLegBye && !event.isBye && event.runs > 0) {
+        const prevBatterRuns = currentInnings?.batterScores?.find((bs: any) => bs.playerId === store.strikerId)?.runs ?? 0;
+        const newBatterRuns = prevBatterRuns + event.runs;
+        const batterName = allBattingPlayers.find((p: any) => p.id === store.strikerId)?.name;
+        if (prevBatterRuns < 50 && newBatterRuns >= 50 && newBatterRuns < 100) {
+          toast({ title: `🏏 Fifty! ${batterName} reaches 50 runs!`, variant: 'default' });
+        } else if (prevBatterRuns < 100 && newBatterRuns >= 100) {
+          toast({ title: `💯 Century! ${batterName} reaches 100 runs!`, variant: 'default' });
+        } else if (prevBatterRuns < 150 && newBatterRuns >= 150) {
+          toast({ title: `⭐ 150! ${batterName} reaches 150 runs!`, variant: 'default' });
+        }
+      }
 
       // Rotate strike for odd runs
       if (!event.isWide && !event.isNoBall && event.runs % 2 === 1) store.rotateStrike();
@@ -414,11 +457,36 @@ export function ScoringClient({ match }: ScoringClientProps) {
     }
   }
 
-  async function handleWicketConfirm(data: { wicketType: string; fielderId?: string; nextBatsmanId: string }) {
+  async function handleWicketConfirm(data: { wicketType: string; fielderId?: string; nextBatsmanId: string; isRetiredHurt?: boolean }) {
     store.setShowWicketModal(false);
     store.setIsSubmitting(true);
     const inningsId = await ensureInnings();
     if (!inningsId) { store.setIsSubmitting(false); return; }
+
+    // Retired Hurt: batsman leaves field, NOT counted as wicket
+    if (data.wicketType === 'RetiredHurt' || data.wicketType === 'RetiredOut') {
+      try {
+        await fetch(`/api/matches/${match.id}/retire`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            inningsId,
+            batsmanId: store.strikerId,
+            retireType: data.wicketType,
+          }),
+        });
+        const label = data.wicketType === 'RetiredHurt' ? 'Retired Hurt' : 'Retired Out';
+        toast({ title: `${label}`, description: `${allBattingPlayers.find((p: any) => p.id === store.strikerId)?.name} has retired`, variant: 'default' });
+        if (data.nextBatsmanId) store.setStriker(data.nextBatsmanId);
+        router.refresh();
+      } catch {
+        toast({ title: 'Error retiring batsman', variant: 'destructive' });
+      } finally {
+        store.setIsSubmitting(false);
+      }
+      return;
+    }
+
     try {
       const overBalls = allLegal.filter((d: any) => d.overNumber === derivedCurrentOver);
       const nextBall = (overBalls.length % 6) + 1;
@@ -445,6 +513,13 @@ export function ScoringClient({ match }: ScoringClientProps) {
 
       triggerAnim('wicket');
       toast({ title: `Wicket! ${data.wicketType}`, variant: 'destructive' });
+
+      // 5-wicket haul milestone check for bowler
+      const bowlerWickets = (currentInnings?.bowlerScores?.find((bs: any) => bs.playerId === store.currentBowlerId)?.wickets ?? 0) + 1;
+      if (bowlerWickets === 5) {
+        const bowlerName = fieldingTeam.players.find((tp: any) => tp.player.id === store.currentBowlerId)?.player.name;
+        toast({ title: `🎯 Five-Wicket Haul!`, description: `${bowlerName} has taken 5 wickets!`, variant: 'default' });
+      }
 
       // All-out check — innings ends when last batsman can't bat alone
       // threshold = team size - 1 (not hardcoded 10)
@@ -572,6 +647,20 @@ export function ScoringClient({ match }: ScoringClientProps) {
       && p.id !== store.nonStrikerId
   );
 
+  // Match timer
+  const [elapsed, setElapsed] = React.useState(0);
+  const matchStart = React.useRef<number>(Date.now());
+  React.useEffect(() => {
+    if (match.status !== 'LIVE') return;
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - matchStart.current) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [match.status]);
+  const elapsedStr = elapsed > 0 ? `${Math.floor(elapsed / 3600) > 0 ? Math.floor(elapsed / 3600) + 'h ' : ''}${Math.floor((elapsed % 3600) / 60)}m` : null;
+
+  // Player search state for batsman/bowler selection
+  const [batsmanSearch, setBatsmanSearch] = React.useState('');
+  const [bowlerSearch, setBowlerSearch] = React.useState('');
+
   const targetRuns = (() => {
     if (currentInnings?.inningsNumber === 4 || effectiveSuperOverInnings4Setup) {
       const base = innings3FinalScore ?? innings3?.totalRuns;
@@ -619,7 +708,10 @@ export function ScoringClient({ match }: ScoringClientProps) {
         <Button variant="ghost" size="icon" onClick={() => router.push(`/matches/${match.id}`)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <span className="font-semibold text-sm">{match.teamA.name} vs {match.teamB.name}</span>
+        <div className="text-center">
+          <span className="font-semibold text-sm">{match.teamA.name} vs {match.teamB.name}</span>
+          {elapsedStr && <p className="text-[10px] text-muted-foreground">⏱ {elapsedStr}</p>}
+        </div>
         <div className="flex items-center gap-1">
           <ShareMatchButton shareToken={match.shareToken} matchTitle={`${match.teamA.name} vs ${match.teamB.name}`} />
           <Button variant="ghost" size="icon" onClick={handleUndo}>
@@ -654,15 +746,24 @@ export function ScoringClient({ match }: ScoringClientProps) {
         {!store.strikerId || !store.nonStrikerId ? (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
             <p className="font-semibold text-amber-400">Select Opening Batsmen</p>
+            <input
+              type="text"
+              placeholder="Search player..."
+              value={batsmanSearch}
+              onChange={(e) => setBatsmanSearch(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-cricket-green transition-colors"
+            />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Striker *</Label>
                 <Select onValueChange={(v) => store.setStriker(v)}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Striker" /></SelectTrigger>
                   <SelectContent>
-                    {allBattingPlayers.map((p: any) => (
-                      <SelectItem key={p.id} value={p.id} disabled={p.id === store.nonStrikerId}>{p.name}</SelectItem>
-                    ))}
+                    {allBattingPlayers
+                      .filter((p: any) => !batsmanSearch || p.name.toLowerCase().includes(batsmanSearch.toLowerCase()))
+                      .map((p: any) => (
+                        <SelectItem key={p.id} value={p.id} disabled={p.id === store.nonStrikerId}>{p.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -671,9 +772,11 @@ export function ScoringClient({ match }: ScoringClientProps) {
                 <Select onValueChange={(v) => store.setNonStriker(v)}>
                   <SelectTrigger className="mt-1"><SelectValue placeholder="Non-striker" /></SelectTrigger>
                   <SelectContent>
-                    {allBattingPlayers.map((p: any) => (
-                      <SelectItem key={p.id} value={p.id} disabled={p.id === store.strikerId}>{p.name}</SelectItem>
-                    ))}
+                    {allBattingPlayers
+                      .filter((p: any) => !batsmanSearch || p.name.toLowerCase().includes(batsmanSearch.toLowerCase()))
+                      .map((p: any) => (
+                        <SelectItem key={p.id} value={p.id} disabled={p.id === store.strikerId}>{p.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -702,31 +805,36 @@ export function ScoringClient({ match }: ScoringClientProps) {
         {!store.currentBowlerId ? (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
             <p className="mb-2 font-semibold text-amber-400">Select Bowler</p>
+            <input
+              type="text"
+              placeholder="Search bowler..."
+              value={bowlerSearch}
+              onChange={(e) => setBowlerSearch(e.target.value)}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-cricket-green transition-colors mb-2"
+            />
             <Select onValueChange={(v) => store.setBowler(v)}>
               <SelectTrigger><SelectValue placeholder="Select bowler" /></SelectTrigger>
               <SelectContent>
-                {[...fieldingTeam.players].sort((a: any, b: any) => {
-                  if (a.player.id === prevBowlerId) return 1;
-                  if (b.player.id === prevBowlerId) return -1;
-                  return 0;
-                }).map((tp: any) => {
-                  const isPrev = tp.player.id === prevBowlerId;
-                  const isBatting = tp.player.id === store.strikerId || tp.player.id === store.nonStrikerId;
-                  const isDisabled = isPrev || isBatting;
-                  return (
-                    <SelectItem key={tp.player.id} value={tp.player.id} disabled={isDisabled}>
-                      <span className="flex items-center gap-2">
-                        {tp.player.name}
-                        {isPrev && (
-                          <span className="text-xs text-muted-foreground">(bowled last over)</span>
-                        )}
-                        {isBatting && (
-                          <span className="text-xs text-muted-foreground">(currently batting)</span>
-                        )}
-                      </span>
-                    </SelectItem>
-                  );
-                })}
+                {[...fieldingTeam.players]
+                  .filter((tp: any) => !bowlerSearch || tp.player.name.toLowerCase().includes(bowlerSearch.toLowerCase()))
+                  .sort((a: any, b: any) => {
+                    if (a.player.id === prevBowlerId) return 1;
+                    if (b.player.id === prevBowlerId) return -1;
+                    return 0;
+                  }).map((tp: any) => {
+                    const isPrev = tp.player.id === prevBowlerId;
+                    const isBatting = tp.player.id === store.strikerId || tp.player.id === store.nonStrikerId;
+                    const isDisabled = isPrev || isBatting;
+                    return (
+                      <SelectItem key={tp.player.id} value={tp.player.id} disabled={isDisabled}>
+                        <span className="flex items-center gap-2">
+                          {tp.player.name}
+                          {isPrev && <span className="text-xs text-muted-foreground">(bowled last over)</span>}
+                          {isBatting && <span className="text-xs text-muted-foreground">(currently batting)</span>}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
               </SelectContent>
             </Select>
           </div>

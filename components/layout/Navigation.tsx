@@ -64,11 +64,14 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-3 border-t border-border/20">
+      <div className="p-3 border-t border-border/20 space-y-2">
         <div className="rounded-xl bg-gradient-to-br from-cricket-green-500/10 to-cricket-amber-500/10 p-3">
           <p className="text-xs font-medium text-foreground/80">Pro Tip</p>
           <p className="text-xs text-muted-foreground mt-0.5">Share live scores with spectators via public links</p>
         </div>
+        <p className="text-center text-[10px] text-muted-foreground/30 tabular-nums">
+          v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
+        </p>
       </div>
     </aside>
   );

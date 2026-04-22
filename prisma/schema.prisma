@@ -56,13 +56,14 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  players     Player[]
-  teams       Team[]
-  captainOf   Team[]     @relation("TeamCaptain")
-  matches     Match[]
-  tournaments Tournament[]
+  accounts         Account[]
+  sessions         Session[]
+  players          Player[]
+  teams            Team[]
+  captainOf        Team[]             @relation("TeamCaptain")
+  matches          Match[]
+  tournaments      Tournament[]
+  pushSubscriptions PushSubscription[]
 }
 
 model Player {
@@ -102,9 +103,10 @@ model Team {
   captainUser     User?             @relation("TeamCaptain", fields: [captainUserId], references: [id])
   players         TeamPlayer[]
   tournamentTeams TournamentTeam[]
-  matchesAsTeamA  Match[]           @relation("MatchTeamA")
-  matchesAsTeamB  Match[]           @relation("MatchTeamB")
+  matchesAsTeamA  Match[]               @relation("MatchTeamA")
+  matchesAsTeamB  Match[]               @relation("MatchTeamB")
   innings         Innings[]
+  groupTeams      TournamentGroupTeam[]
 
   @@index([userId])
   @@index([captainUserId])
@@ -138,9 +140,10 @@ model Tournament {
   createdAt     DateTime         @default(now())
   updatedAt   DateTime          @updatedAt
 
-  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   teams   TournamentTeam[]
   matches Match[]
+  groups  TournamentGroup[]
 
   @@index([userId])
   @@index([shareToken])
@@ -171,6 +174,8 @@ model Match {
   status        MatchStatus  @default(UPCOMING)
   matchType     String       @default("Friendly") // Friendly | Tournament
   shareToken    String       @unique @default(cuid())
+  playingXI_A   String[]     @default([])
+  playingXI_B   String[]     @default([])
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -207,6 +212,7 @@ model Innings {
   deliveries   Delivery[]
   batterScores BatterScore[]
   bowlerScores BowlerScore[]
+  partnerships Partnership[]
 
   @@unique([matchId, inningsNumber])
   @@index([matchId])
@@ -263,6 +269,7 @@ model BowlerScore {
   inningsId String
   playerId  String
   overs     Float  @default(0)
+  balls     Int    @default(0)
   maidens   Int    @default(0)
   runs      Int    @default(0)
   wickets   Int    @default(0)
@@ -272,6 +279,60 @@ model BowlerScore {
 
   @@unique([inningsId, playerId])
   @@index([inningsId])
+}
+
+model Partnership {
+  id                  String   @id @default(cuid())
+  inningsId           String
+  batsman1Id          String
+  batsman2Id          String
+  runs                Int      @default(0)
+  balls               Int      @default(0)
+  startOver           Float    @default(0)
+  endOver             Float?
+  isUnbroken          Boolean  @default(true)
+  wicketFallBatsmanId String?
+
+  innings Innings @relation(fields: [inningsId], references: [id], onDelete: Cascade)
+
+  @@index([inningsId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  matchId   String?
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([matchId])
+}
+
+model TournamentGroup {
+  id           String   @id @default(cuid())
+  tournamentId String
+  name         String
+  groupOrder   Int      @default(0)
+
+  tournament Tournament            @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teams      TournamentGroupTeam[]
+
+  @@index([tournamentId])
+}
+
+model TournamentGroupTeam {
+  groupId String
+  teamId  String
+
+  group TournamentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  team  Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, teamId])
 }
 
 // ─── Enums ─────────────────────────────────────────────────────────────────

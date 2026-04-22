@@ -13,6 +13,7 @@ interface ShareMatchButtonProps {
 export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
 
   const url = typeof window !== 'undefined'
     ? `${window.location.origin}/m/${shareToken}`
@@ -28,6 +29,13 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
     if (navigator.share) {
       await navigator.share({ title: matchTitle, text: `Watch live score: ${matchTitle}`, url });
     }
+  }
+
+  async function handleCopyEmbed() {
+    const code = `<iframe src="${window.location.origin}/embed/${shareToken}" width="320" height="120" frameborder="0" style="border-radius:12px;overflow:hidden;" title="${matchTitle}"></iframe>`;
+    await navigator.clipboard.writeText(code);
+    setEmbedCopied(true);
+    setTimeout(() => setEmbedCopied(false), 2500);
   }
 
   return (
@@ -78,6 +86,20 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
             </div>
 
             {copied && <p className="text-center text-xs text-green-400">Link copied!</p>}
+
+            {/* Embed Code */}
+            <div>
+              <p className="text-xs text-white/40 mb-2">Embed in your website</p>
+              <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                <code className="flex-1 text-[10px] text-white/50 break-all leading-relaxed font-mono">
+                  {`<iframe src="${typeof window !== 'undefined' ? window.location.origin : ''}/embed/${shareToken}" width="320" height="120" frameborder="0" ...>`}
+                </code>
+                <button onClick={handleCopyEmbed} className="shrink-0 text-white/50 hover:text-white transition-colors mt-0.5">
+                  {embedCopied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                </button>
+              </div>
+              {embedCopied && <p className="text-xs text-green-400 mt-1">Embed code copied!</p>}
+            </div>
 
             {/* Buttons */}
             <div className="grid grid-cols-2 gap-3">

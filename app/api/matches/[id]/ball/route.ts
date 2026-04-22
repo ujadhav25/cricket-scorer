@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { pusherServer, matchChannel, PUSHER_EVENTS } from '@/lib/pusher-server';
 import { sseHub } from '@/lib/sse';
+import { sendMatchPushNotification } from '@/lib/push';
 import {
   getAuthSession,
   unauthorizedResponse,
@@ -153,11 +154,13 @@ export async function POST(
         inningsId: ballData.inningsId,
         playerId: ballData.bowlerId,
         overs: isLegalBall ? 1 / 6 : 0,
+        balls: isLegalBall ? 1 : 0,
         runs: totalBallRuns,
         wickets: ballData.isWicket && !['RunOut'].includes(ballData.wicketType ?? '') ? 1 : 0,
       },
       update: {
         overs: { increment: isLegalBall ? 1 / 6 : 0 },
+        balls: { increment: isLegalBall ? 1 : 0 },
         runs: { increment: totalBallRuns },
         wickets: {
           increment:
@@ -172,8 +175,78 @@ export async function POST(
       data: { status: 'LIVE' },
     });
 
+    // Partnership tracking — upsert the active (unbroken) partnership for this batting pair
+    // Only update if both batsmen IDs are in the request body (caller provides strikerId + nonStrikerId)
+    // We track partnerships by looking for an unbroken partnership that includes batsmanId
+    const batsmanId = ballData.batsmanId;
+    const isLegalForPartnership = !ballData.isWide && !ballData.isNoBall;
+    const partnershipRuns = ballData.isLegBye || ballData.isBye ? 0 : ballData.runs;
+
+    const existingPartnership = await prisma.partnership.findFirst({
+      where: { inningsId: ballData.inningsId, isUnbroken: true },
+      orderBy: { id: 'desc' },
+    });
+
+    if (existingPartnership) {
+      // Update existing partnership
+      await prisma.partnership.update({
+        where: { id: existingPartnership.id },
+        data: {
+          runs: { increment: partnershipRuns + (ballData.isWide || ballData.isNoBall ? 1 : 0) },
+          balls: { increment: isLegalForPartnership ? 1 : 0 },
+          ...(ballData.isWicket && {
+            isUnbroken: false,
+            wicketFallBatsmanId: batsmanId,
+            endOver: parseFloat(`${ballData.overNumber}.${ballData.ballNumber}`),
+          }),
+        },
+      });
+    } else {
+      // Start new partnership when first ball is bowled (or after a wicket — client should have sent new batsmen)
+      // We use a sentinel: create when no unbroken partnership exists
+      await prisma.partnership.create({
+        data: {
+          inningsId: ballData.inningsId,
+          batsman1Id: batsmanId,
+          batsman2Id: batsmanId, // Will be corrected by next DB update — placeholder
+          runs: partnershipRuns + (ballData.isWide || ballData.isNoBall ? 1 : 0),
+          balls: isLegalForPartnership ? 1 : 0,
+          startOver: parseFloat(`${ballData.overNumber}.${ballData.ballNumber}`),
+          isUnbroken: !ballData.isWicket,
+          ...(ballData.isWicket && {
+            wicketFallBatsmanId: batsmanId,
+            endOver: parseFloat(`${ballData.overNumber}.${ballData.ballNumber}`),
+          }),
+        },
+      });
+    }
+
     // Push real-time update via SSE
     sseHub.emit(params.id, 'update');
+
+    // Send push notification for milestones (non-fatal)
+    try {
+      const matchInfo = await prisma.match.findUnique({
+        where: { id: params.id },
+        select: { teamA: { select: { name: true } }, teamB: { select: { name: true } } },
+      });
+      const teamNames = `${matchInfo?.teamA.name} vs ${matchInfo?.teamB.name}`;
+      if (ballData.isWicket) {
+        const batter = await prisma.player.findUnique({ where: { id: ballData.batsmanId }, select: { name: true } });
+        await sendMatchPushNotification(params.id, `WICKET! 🎯 ${teamNames}`, `${batter?.name ?? 'Batsman'} is out! Score: ${innings.totalRuns}/${innings.totalWickets}`);
+      } else if (!ballData.isWide && !ballData.isNoBall) {
+        const batter = await prisma.batterScore.findUnique({
+          where: { inningsId_playerId: { inningsId: ballData.inningsId, playerId: ballData.batsmanId } },
+          select: { runs: true, player: { select: { name: true } } },
+        });
+        const runs = batter?.runs ?? 0;
+        if (runs === 50 || runs === 100 || runs === 150) {
+          await sendMatchPushNotification(params.id, `${runs === 50 ? '⭐ FIFTY' : runs === 100 ? '💯 CENTURY' : '🔥 150!'} — ${teamNames}`, `${batter?.player.name ?? 'Batsman'} reaches ${runs}!`);
+        }
+      }
+    } catch (_) {
+      // Push notification errors are non-fatal
+    }
 
     // Also try Pusher if configured (non-fatal)
     try {

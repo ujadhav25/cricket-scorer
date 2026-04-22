@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/lib/utils';
-import { Edit } from 'lucide-react';
+import { Edit, Zap } from 'lucide-react';
 import TournamentStatsClient from './TournamentStatsClient';
 import DeleteTournamentButton from './DeleteTournamentButton';
 import { ShareTournamentButton } from '@/components/ShareTournamentButton';
 import { TournamentJoinButton } from '@/components/TournamentJoinButton';
+import { GenerateFixturesButton } from './GenerateFixturesButton';
+import { KnockoutBracket } from './KnockoutBracket';
+import { GroupStageManager } from './GroupStageManager';
 
 export default async function TournamentDetailPage({ params }: { params: { id: string } }) {
   const session = await auth();
@@ -26,6 +29,7 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
     },
     include: {
       teams: { include: { team: true } },
+      groups: { include: { groupTeams: { include: { team: true } } }, orderBy: { groupOrder: 'asc' } },
       matches: {
         include: {
           teamA: true, teamB: true,
@@ -186,15 +190,18 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
           </Button>
           <TournamentJoinButton joinToken={tournament.joinToken} tournamentName={tournament.name} />
           <ShareTournamentButton shareToken={tournament.shareToken} tournamentName={tournament.name} />
+          <GenerateFixturesButton tournamentId={tournament.id} teamCount={tournament.teams.length} matchCount={upcoming.length + completed.length} format={tournament.format} />
           <DeleteTournamentButton tournamentId={tournament.id} />
         </div>
       </div>
 
       <Tabs defaultValue="points">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="points">{isBilateral ? 'Series Score' : 'Points Table'}</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="points">{isBilateral ? 'Series Score' : 'Points'}</TabsTrigger>
           <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
           <TabsTrigger value="results">Results</TabsTrigger>
+          <TabsTrigger value="groups">Groups</TabsTrigger>
+          <TabsTrigger value="caps">🧢 Caps</TabsTrigger>
           <TabsTrigger value="stats">Stats</TabsTrigger>
         </TabsList>
 
@@ -379,6 +386,126 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
         </TabsContent>
         <TabsContent value="stats">
           <TournamentStatsClient batting={battingStats} bowling={bowlingStats} />
+        </TabsContent>
+
+        <TabsContent value="groups">
+          <GroupStageManager
+            tournamentId={tournament.id}
+            isOwner={tournament.userId === session.user.id}
+            allTeams={tournament.teams.map((t) => ({ id: t.team.id, name: t.team.name }))}
+            groups={(tournament as any).groups ?? []}
+          />
+        </TabsContent>
+
+        <TabsContent value="caps">
+          <div className="mt-4 space-y-6">
+            {/* Orange Cap — Top Scorer */}
+            <div className="rounded-xl border border-orange-500/30 bg-orange-500/[0.04] overflow-hidden">
+              <div className="px-4 py-3 border-b border-orange-500/20 flex items-center gap-2">
+                <span className="text-lg">🧡</span>
+                <h3 className="font-bold text-orange-400">Orange Cap — Top Run Scorers</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/30 text-left text-xs text-muted-foreground">
+                      <th className="px-4 py-2">#</th>
+                      <th className="px-2 py-2">Player</th>
+                      <th className="px-2 py-2 text-right">M</th>
+                      <th className="px-2 py-2 text-right">Inn</th>
+                      <th className="px-2 py-2 text-right font-bold text-orange-400">Runs</th>
+                      <th className="px-2 py-2 text-right">HS</th>
+                      <th className="px-2 py-2 text-right">Avg</th>
+                      <th className="px-2 py-2 text-right">SR</th>
+                      <th className="pr-4 py-2 text-right">6s</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {battingStats.slice(0, 10).map((p, i) => (
+                      <tr key={p.id} className={`border-b border-border/20 ${i === 0 ? 'bg-orange-500/10' : ''}`}>
+                        <td className="px-4 py-2.5 font-bold text-muted-foreground">{i + 1}</td>
+                        <td className="px-2 py-2.5">
+                          <div className="flex items-center gap-2">
+                            {i === 0 && <span className="text-base">🧡</span>}
+                            <Link href={`/players/${p.id}`} className="font-semibold hover:text-orange-400 transition-colors">{p.name}</Link>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.matches}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.innings}</td>
+                        <td className={`px-2 py-2.5 text-right font-black ${i === 0 ? 'text-orange-400' : ''}`}>{p.runs}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.hs}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.avg}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.sr}</td>
+                        <td className="pr-4 py-2.5 text-right text-muted-foreground">{p.sixes}</td>
+                      </tr>
+                    ))}
+                    {battingStats.length === 0 && (
+                      <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">No batting data yet</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Purple Cap — Top Wicket Taker */}
+            <div className="rounded-xl border border-purple-500/30 bg-purple-500/[0.04] overflow-hidden">
+              <div className="px-4 py-3 border-b border-purple-500/20 flex items-center gap-2">
+                <span className="text-lg">💜</span>
+                <h3 className="font-bold text-purple-400">Purple Cap — Top Wicket Takers</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/30 text-left text-xs text-muted-foreground">
+                      <th className="px-4 py-2">#</th>
+                      <th className="px-2 py-2">Player</th>
+                      <th className="px-2 py-2 text-right">M</th>
+                      <th className="px-2 py-2 text-right">O</th>
+                      <th className="px-2 py-2 text-right font-bold text-purple-400">Wkts</th>
+                      <th className="px-2 py-2 text-right">Best</th>
+                      <th className="px-2 py-2 text-right">Avg</th>
+                      <th className="pr-4 py-2 text-right">Econ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bowlingStats.slice(0, 10).map((p, i) => (
+                      <tr key={p.id} className={`border-b border-border/20 ${i === 0 ? 'bg-purple-500/10' : ''}`}>
+                        <td className="px-4 py-2.5 font-bold text-muted-foreground">{i + 1}</td>
+                        <td className="px-2 py-2.5">
+                          <div className="flex items-center gap-2">
+                            {i === 0 && <span className="text-base">💜</span>}
+                            <Link href={`/players/${p.id}`} className="font-semibold hover:text-purple-400 transition-colors">{p.name}</Link>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.matches}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.overs}</td>
+                        <td className={`px-2 py-2.5 text-right font-black ${i === 0 ? 'text-purple-400' : ''}`}>{p.wickets}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.bestFigures}</td>
+                        <td className="px-2 py-2.5 text-right text-muted-foreground">{p.avg}</td>
+                        <td className="pr-4 py-2.5 text-right text-muted-foreground">{p.econ}</td>
+                      </tr>
+                    ))}
+                    {bowlingStats.length === 0 && (
+                      <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">No bowling data yet</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Knockout Bracket for KNOCKOUT/GROUP_KNOCKOUT */}
+            {(tournament.format === 'KNOCKOUT' || tournament.format === 'GROUP_KNOCKOUT') && completed.length > 0 && (
+              <KnockoutBracket matches={[...completed, ...upcoming].map((m) => ({
+                id: m.id,
+                teamAName: m.teamA.name,
+                teamBName: m.teamB.name,
+                status: m.status,
+                innings: m.innings.map((i) => ({ inningsNumber: i.inningsNumber, battingTeamId: i.battingTeamId, totalRuns: i.totalRuns, totalWickets: i.totalWickets })),
+                teamAId: m.teamAId,
+                teamBId: m.teamBId,
+              }))} />
+            )}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
