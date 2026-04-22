@@ -121,14 +121,15 @@ export function ScoringClient({ match }: ScoringClientProps) {
   // Determine batting team players — swap teams for innings 2 / super over setup
   // Use stored innings1BattingTeamId when innings 1 may not yet be in the refreshed match prop
   const i1BattingTeamId = innings1BattingTeamId ?? innings1?.battingTeamId;
+  const i2BattingTeamId = innings2?.battingTeamId;
   const battingTeam = effectiveNeedsInnings2
     ? (i1BattingTeamId === match.teamAId ? match.teamB : match.teamA)
     : effectiveSuperOverSetup
-      // Super over innings 3: same batting order as innings 1 (original first batting team)
-      ? (i1BattingTeamId === match.teamAId ? match.teamA : match.teamB)
+      // ICC rule: team that batted SECOND in regular innings bats FIRST in super over
+      ? (i2BattingTeamId === match.teamAId ? match.teamA : match.teamB)
       : effectiveSuperOverInnings4Setup
-        // Super over innings 4: same batting order as innings 2
-        ? (innings2?.battingTeamId === match.teamAId ? match.teamA : match.teamB)
+        // Super over innings 4: opposite team from innings 3
+        ? (innings3?.battingTeamId === match.teamAId ? match.teamB : match.teamA)
         : currentInnings
           ? (currentInnings.battingTeamId === match.teamAId ? match.teamA : match.teamB)
           : match.teamA;
@@ -205,6 +206,13 @@ export function ScoringClient({ match }: ScoringClientProps) {
     if (animTimer.current) clearTimeout(animTimer.current);
     const duration = type === 'six' ? 2500 : 2000;
     animTimer.current = setTimeout(() => store.clearAnimation(), duration);
+  }
+
+  // Persist innings completion to DB so navigation-away + back still shows correct state
+  async function completeCurrentInnings() {
+    try {
+      await fetch(`/api/matches/${match.id}/innings`, { method: 'PATCH' });
+    } catch (_) {}
   }
 
   async function ensureInnings(): Promise<string | null> {
@@ -314,9 +322,16 @@ export function ScoringClient({ match }: ScoringClientProps) {
       // Rotate strike for odd runs
       if (!event.isWide && !event.isNoBall && event.runs % 2 === 1) store.rotateStrike();
 
+      // Determine which innings we are logically in — use state flags, not stale currentInnings prop.
+      // ensureInnings() may have just created a new innings in the DB without refreshing match.innings.
+      const activeInningsNumber = effectiveSuperOverInnings4Setup ? 4
+        : effectiveSuperOverSetup ? 3
+        : effectiveNeedsInnings2 ? 2
+        : (currentInnings?.inningsNumber ?? 1);
+
       // Check if target chased (innings 2 or super over innings 4 win condition)
       // Use dbTotalRuns (from DB response) — not client-computed value which can be stale
-      if (targetRuns && (currentInnings?.inningsNumber === 2 || currentInnings?.inningsNumber === 4)) {
+      if (targetRuns && (activeInningsNumber === 2 || activeInningsNumber === 4)) {
         if (dbTotalRuns >= targetRuns) {
           try { await fetch(`/api/matches/${match.id}/complete`, { method: 'PUT' }); } catch (_) {}
           toast({ title: 'Match won!', description: `${battingTeam.name} win by ${10 - (optimisticInnings?.totalWickets ?? 0)} wickets`, variant: 'default' });
@@ -334,9 +349,9 @@ export function ScoringClient({ match }: ScoringClientProps) {
         const oversCompleted = derivedCurrentOver + 1;
         const activeOvers = isSuperOver ? 1 : match.overs;
         if (oversCompleted >= activeOvers) {
-          const activeInningsNumber = currentInnings?.inningsNumber ?? 1;
           if (activeInningsNumber === 1) {
             // End of innings 1 — save authoritative score, set up innings 2
+            await completeCurrentInnings();
             setInnings1FinalScore(dbTotalRuns);
             setInnings1BattingTeamId(battingTeam.id);
             setNeedsInnings2(true);
@@ -349,9 +364,10 @@ export function ScoringClient({ match }: ScoringClientProps) {
             toast({ title: 'Innings 1 complete!', description: `Target for 2nd innings: ${target}`, variant: 'default' });
             router.refresh();
           } else if (activeInningsNumber === 2) {
-            // End of innings 2 — use DB total vs saved innings1 score for tie detection
-            const inn1Score = innings1FinalScore ?? innings1?.totalRuns ?? -1;
+            // End of innings 2 — use DB innings1 total as primary, state as fallback
+            const inn1Score = match.innings.find((i: any) => i.inningsNumber === 1)?.totalRuns ?? innings1FinalScore ?? -1;
             if (dbTotalRuns === inn1Score) {
+              await completeCurrentInnings();
               setNeedsSuperOver(true);
               store.setStriker('');
               store.setNonStriker('');
@@ -368,6 +384,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
             }
           } else if (activeInningsNumber === 3) {
             // End of super over innings 3 — save score, set up innings 4
+            await completeCurrentInnings();
             setInnings3FinalScore(dbTotalRuns);
             setNeedsSuperOverInnings4(true);
             store.setStriker('');
@@ -434,8 +451,14 @@ export function ScoringClient({ match }: ScoringClientProps) {
       const teamSize = allBattingPlayers.length;
       const newWickets = (optimisticInnings?.totalWickets ?? 0) + 1;
       if (newWickets >= teamSize - 1 || !data.nextBatsmanId) {
-        const inningsNum = currentInnings?.inningsNumber ?? 1;
+        // Use state flags to determine active innings number — currentInnings may be stale
+        // if ensureInnings() just created this innings without a router.refresh().
+        const inningsNum = effectiveSuperOverInnings4Setup ? 4
+          : effectiveSuperOverSetup ? 3
+          : effectiveNeedsInnings2 ? 2
+          : (currentInnings?.inningsNumber ?? 1);
         if (inningsNum === 1) {
+          await completeCurrentInnings();
           setInnings1FinalScore(wicketInningsTotal);
           setInnings1BattingTeamId(currentInnings?.battingTeamId ?? battingTeam.id);
           setNeedsInnings2(true);
@@ -448,8 +471,9 @@ export function ScoringClient({ match }: ScoringClientProps) {
           toast({ title: 'All out! Innings 1 over.', description: `Target: ${target}`, variant: 'default' });
           router.refresh();
         } else if (inningsNum === 2) {
-          const inn1Score = innings1FinalScore ?? innings1?.totalRuns ?? -1;
+          const inn1Score = match.innings.find((i: any) => i.inningsNumber === 1)?.totalRuns ?? innings1FinalScore ?? -1;
           if (wicketInningsTotal === inn1Score) {
+            await completeCurrentInnings();
             setNeedsSuperOver(true);
             store.setStriker('');
             store.setNonStriker('');
@@ -465,6 +489,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
             router.refresh();
           }
         } else if (inningsNum === 3) {
+          await completeCurrentInnings();
           setInnings3FinalScore(wicketInningsTotal);
           setNeedsSuperOverInnings4(true);
           store.setStriker('');
@@ -508,14 +533,36 @@ export function ScoringClient({ match }: ScoringClientProps) {
   const nonStrikerScore = currentInnings?.batterScores?.find((b: any) => b.playerId === store.nonStrikerId);
   const bowlerScore = currentInnings?.bowlerScores?.find((b: any) => b.playerId === store.currentBowlerId);
 
-  // Add runs from optimistic deliveries not yet persisted to server
+  // Add runs/balls from optimistic deliveries not yet synced to server — keeps batter display in sync with total
   const syncedDeliveries = currentInnings?.deliveries ?? [];
-  const optimisticBowlerRuns = optimisticDeliveries
-    .filter((od) => od.bowlerId === store.currentBowlerId && !syncedDeliveries.some(
+  const unsynced = optimisticDeliveries.filter(
+    (od) => !syncedDeliveries.some(
       (sd: any) => sd.overNumber === od.overNumber && sd.ballNumber === od.ballNumber
         && Boolean(sd.isWide) === Boolean(od.isWide) && Boolean(sd.isNoBall) === Boolean(od.isNoBall)
-    ))
-    .reduce((sum: number, od: any) => sum + (od.runs ?? 0), 0);
+    )
+  );
+
+  function optimisticBatterStats(playerId: string | null | undefined) {
+    if (!playerId) return { runs: 0, balls: 0 };
+    return unsynced
+      .filter((od) => od.batsmanId === playerId)
+      .reduce((acc, od) => ({
+        runs: acc.runs + (od.isLegBye || od.isBye ? 0 : (od.runs ?? 0)),
+        balls: acc.balls + (od.isWide || od.isNoBall ? 0 : 1),
+      }), { runs: 0, balls: 0 });
+  }
+
+  const strikerOptimistic = optimisticBatterStats(store.strikerId);
+  const nonStrikerOptimistic = optimisticBatterStats(store.nonStrikerId);
+
+  const strikerDisplayRuns = (strikerScore?.runs ?? 0) + strikerOptimistic.runs;
+  const strikerDisplayBalls = (strikerScore?.balls ?? 0) + strikerOptimistic.balls;
+  const nonStrikerDisplayRuns = (nonStrikerScore?.runs ?? 0) + nonStrikerOptimistic.runs;
+  const nonStrikerDisplayBalls = (nonStrikerScore?.balls ?? 0) + nonStrikerOptimistic.balls;
+
+  const optimisticBowlerRuns = unsynced
+    .filter((od) => od.bowlerId === store.currentBowlerId)
+    .reduce((sum: number, od: any) => sum + (od.runs ?? 0) + (od.isWide || od.isNoBall ? 1 : 0), 0);
   const bowlerDisplayRuns = (bowlerScore?.runs ?? 0) + optimisticBowlerRuns;
 
   const allBattingPlayers = (battingTeam?.players ?? []).map((tp: any) => tp.player);
@@ -634,17 +681,13 @@ export function ScoringClient({ match }: ScoringClientProps) {
                 <span>⚡</span> STRIKER
               </div>
               <p className="font-semibold truncate">{allBattingPlayers.find((p: any) => p.id === store.strikerId)?.name ?? '—'}</p>
-              {strikerScore && (
-                <p className="text-lg font-bold">{strikerScore.runs}<span className="text-sm text-muted-foreground">({strikerScore.balls})</span></p>
-              )}
+              <p className="text-lg font-bold">{strikerDisplayRuns}<span className="text-sm text-muted-foreground">({strikerDisplayBalls})</span></p>
             </div>
             {/* Non-striker */}
             <div className="rounded-lg border border-border bg-card p-3">
               <div className="text-xs text-muted-foreground font-semibold mb-1">NON-STRIKER</div>
               <p className="font-semibold truncate">{allBattingPlayers.find((p: any) => p.id === store.nonStrikerId)?.name ?? '—'}</p>
-              {nonStrikerScore && (
-                <p className="text-lg font-bold">{nonStrikerScore.runs}<span className="text-sm text-muted-foreground">({nonStrikerScore.balls})</span></p>
-              )}
+              <p className="text-lg font-bold">{nonStrikerDisplayRuns}<span className="text-sm text-muted-foreground">({nonStrikerDisplayBalls})</span></p>
             </div>
           </div>
         )}

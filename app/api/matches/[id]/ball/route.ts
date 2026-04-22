@@ -52,6 +52,20 @@ export async function POST(
       return badRequestResponse('A batsman cannot bowl in the same ball');
     }
 
+    // --- All-out guard: reject wicket if team is already at max wickets ---
+    if (ballData.isWicket) {
+      const inningsInfo = await prisma.innings.findUnique({
+        where: { id: ballData.inningsId },
+        select: { totalWickets: true, battingTeamId: true },
+      });
+      if (inningsInfo) {
+        const battingTeamSize = await prisma.teamPlayer.count({ where: { teamId: inningsInfo.battingTeamId } });
+        if (battingTeamSize > 0 && inningsInfo.totalWickets >= battingTeamSize - 1) {
+          return badRequestResponse('Team is already all out');
+        }
+      }
+    }
+
     // Server-side enforcement: same bowler cannot bowl consecutive overs
     if (ballData.overNumber > 0) {
       const prevOverBowler = await prisma.delivery.findFirst({

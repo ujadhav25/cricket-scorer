@@ -35,6 +35,18 @@ export async function PUT(
 
     const { battingTeamId, inningsNumber, openingBatsmanIds, openingBowlerId } = parsed.data;
 
+    // Guard: innings 2 must be batted by the other team.
+    // Super over innings (3 & 4) have no team restriction — any pair can be chosen.
+    if (inningsNumber === 2) {
+      const inn1 = await prisma.innings.findUnique({
+        where: { matchId_inningsNumber: { matchId: params.id, inningsNumber: 1 } },
+        select: { battingTeamId: true },
+      });
+      if (inn1 && inn1.battingTeamId === battingTeamId) {
+        return badRequestResponse('Innings 2 must be batted by the opposing team');
+      }
+    }
+
     // Complete current innings if it exists
     await prisma.innings.updateMany({
       where: { matchId: params.id, isCompleted: false },

@@ -40,25 +40,31 @@ export default async function MatchDetailPage({ params }: { params: { id: string
 
   if (!match) notFound();
 
-  // Determine winner for fireworks
+  // Determine winner and the SINGLE decisive innings number
   let winnerName: string | undefined;
+  let decisiveInningsNumber: number | null = null;
   if (match.status === 'COMPLETED' && match.innings.length >= 2) {
     const inn1 = match.innings.find((i: any) => i.inningsNumber === 1);
     const inn2 = match.innings.find((i: any) => i.inningsNumber === 2);
     const inn3 = match.innings.find((i: any) => i.inningsNumber === 3);
     const inn4 = match.innings.find((i: any) => i.inningsNumber === 4);
 
-    // If super over was played, use super over scores to determine winner
+    const teamName = (battingTeamId: string) =>
+      battingTeamId === match.teamAId ? match.teamA.name : match.teamB.name;
+
+    // If super over was played, use super over scores
     if (inn3 && inn4) {
-      const soTeam3Name = inn3.battingTeam?.name ?? (inn3.battingTeamId === match.teamAId ? match.teamA.name : match.teamB.name);
-      const soTeam4Name = inn4.battingTeam?.name ?? (inn4.battingTeamId === match.teamAId ? match.teamA.name : match.teamB.name);
-      if (inn4.totalRuns > inn3.totalRuns) winnerName = soTeam4Name;
-      else if (inn3.totalRuns > inn4.totalRuns) winnerName = soTeam3Name;
+      if (inn4.totalRuns > inn3.totalRuns) {
+        winnerName = teamName(inn4.battingTeamId); decisiveInningsNumber = 4;
+      } else if (inn3.totalRuns > inn4.totalRuns) {
+        winnerName = teamName(inn3.battingTeamId); decisiveInningsNumber = 3;
+      }
     } else if (inn1 && inn2) {
-      const team2Name = inn2.battingTeam?.name ?? (inn2.battingTeamId === match.teamAId ? match.teamA.name : match.teamB.name);
-      const team1Name = inn1.battingTeam?.name ?? (inn1.battingTeamId === match.teamAId ? match.teamA.name : match.teamB.name);
-      if (inn2.totalRuns > inn1.totalRuns) winnerName = team2Name;
-      else if (inn1.totalRuns > inn2.totalRuns) winnerName = team1Name;
+      if (inn2.totalRuns > inn1.totalRuns) {
+        winnerName = teamName(inn2.battingTeamId); decisiveInningsNumber = 2;
+      } else if (inn1.totalRuns > inn2.totalRuns) {
+        winnerName = teamName(inn1.battingTeamId); decisiveInningsNumber = 1;
+      }
     }
   }
 
@@ -105,11 +111,8 @@ export default async function MatchDetailPage({ params }: { params: { id: string
       {/* Score Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
         {match.innings.map((inn) => {
-          // If a super over was played, only mark the winner on super over innings (3 & 4).
-          // Otherwise mark on regular innings (1 & 2).
-          const hasSuperOver = match.innings.some((i: any) => i.inningsNumber >= 3);
-          const isDecisiveInnings = hasSuperOver ? inn.inningsNumber >= 3 : inn.inningsNumber <= 2;
-          const isWinner = winnerName && inn.battingTeam?.name === winnerName && isDecisiveInnings;
+          // Only one innings is decisive — the one that determined the result.
+          const isWinner = winnerName && inn.inningsNumber === decisiveInningsNumber;
           const isTeamA = inn.battingTeamId === match.teamAId;
           return (
             <div key={inn.id} className={[
