@@ -3,6 +3,19 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Activity, Trophy, BarChart3, Zap, ArrowRight, Users, Globe } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'CricScorer — Real-time Cricket Scoring App',
+  description:
+    'Score cricket matches in real-time, run tournaments, track player stats and share live scoreboards with spectators. Free to use.',
+  openGraph: {
+    title: 'CricScorer — Real-time Cricket Scoring App',
+    description:
+      'Score cricket matches in real-time, run tournaments, track player stats and share live scoreboards with spectators.',
+    type: 'website',
+  },
+};
 
 export default async function HomePage() {
   const session = await auth();

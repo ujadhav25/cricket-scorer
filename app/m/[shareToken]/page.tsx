@@ -2,9 +2,41 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { formatOvers, calcRunRate, calcStrikeRate, calcBowlingEconomy, legalBallCount, legalBallCountForBowler } from '@/lib/utils';
 import { LiveMatchUpdater } from '@/components/LiveMatchUpdater';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function generateMetadata({ params }: { params: { shareToken: string } }): Promise<Metadata> {
+  const match = await prisma.match.findUnique({
+    where: { shareToken: params.shareToken },
+    select: { teamA: { select: { name: true } }, teamB: { select: { name: true } }, status: true, venue: true },
+  });
+
+  if (!match) return { title: 'Match Not Found | CricScorer' };
+
+  const title = `${match.teamA.name} vs ${match.teamB.name} | CricScorer`;
+  const statusLabel = match.status === 'LIVE' ? '🔴 LIVE — ' : match.status === 'COMPLETED' ? 'Match Result — ' : 'Upcoming — ';
+  const description = `${statusLabel}${match.teamA.name} vs ${match.teamB.name}${match.venue ? ` at ${match.venue}` : ''}. Follow live scores on CricScorer.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: 'CricScorer',
+      images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/opengraph-image'],
+    },
+  };
+}
 
 // Build a commentary line for a single delivery
 function commentaryLine(
