@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { Sidebar, BottomNav } from '@/components/layout/Navigation';
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -13,6 +14,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         {children}
       </main>
       <BottomNav />
+      <PwaInstallPrompt />
     </div>
   );
 }

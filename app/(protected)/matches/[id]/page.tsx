@@ -90,7 +90,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-3xl mx-auto">
-      {match.status === 'COMPLETED' && <FireworksAnim winnerName={winnerName} matchId={match.id} />}
+      {match.status === 'COMPLETED' && match.userId === session.user.id && <FireworksAnim winnerName={winnerName} matchId={match.id} completedAt={match.updatedAt} />}
 
       {/* ── Header ── */}
       <div className="space-y-3">

@@ -19,21 +19,29 @@ const COLORS = [
   '#ff4757', '#2ed573', '#eccc68', '#a29bfe',
 ];
 
-export function FireworksAnim({ winnerName, matchId }: { winnerName?: string; matchId: string }) {
+const TEN_MINUTES_MS = 10 * 60 * 1000;
+
+export function FireworksAnim({ winnerName, matchId, completedAt }: { winnerName?: string; matchId: string; completedAt?: Date }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const storageKey = `fireworks-seen-${matchId}`;
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!sessionStorage.getItem(storageKey)) {
+    // Only show if: not already seen AND match was completed within the last 10 minutes
+    const alreadySeen = !!localStorage.getItem(storageKey);
+    const isRecent = completedAt
+      ? Date.now() - new Date(completedAt).getTime() < TEN_MINUTES_MS
+      : false;
+    if (!alreadySeen && isRecent) {
       setVisible(true);
     }
+    // Mark as seen regardless so it never auto-shows again
+    localStorage.setItem(storageKey, '1');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
   function dismiss() {
-    sessionStorage.setItem(storageKey, '1');
     setVisible(false);
   }
 

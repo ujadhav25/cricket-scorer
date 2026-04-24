@@ -56,6 +56,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
+  // Do NOT self.skipWaiting() here — wait for user confirmation
 });
 
 self.addEventListener('activate', (event) => {
@@ -64,6 +65,15 @@ self.addEventListener('activate', (event) => {
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     )
   );
+  // Take control of all pages immediately after activation
+  self.clients.claim();
+});
+
+// Handle skip-waiting message from the update prompt
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {
