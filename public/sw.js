@@ -123,13 +123,40 @@ self.addEventListener('push', (event) => {
     data = event.data?.json() ?? data;
   } catch (_) {}
 
+  // Build rich notification actions and data lines for the score card look
+  const score = data.score;
+  const actions = [];
+
+  // On Android, we can add action buttons
+  if (score) {
+    actions.push({ action: 'view', title: '📊 View Scorecard' });
+  }
+
+  // Build a multi-line body that mimics a score card
+  let body = data.body;
+  if (score) {
+    const lines = [];
+    lines.push(`${score.teamA}: ${score.scoreA}`);
+    lines.push(`${score.teamB}: ${score.scoreB}`);
+    if (score.status) lines.push(score.status);
+    body = lines.join('\n');
+  }
+
   event.waitUntil(
     self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/manifest.json',
-      badge: '/manifest.json',
-      data: { url: data.url },
-      vibrate: [200, 100, 200],
+      body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-96.png',
+      tag: data.score ? `match-score-${data.url}` : 'cricscorer',  // same tag = replaces previous score notif
+      renotify: true,
+      data: { url: data.url ?? '/' },
+      vibrate: data.score?.event === 'WICKET' ? [300, 100, 300, 100, 300] :
+               data.score?.event === 'SIX'    ? [200, 100, 200] :
+               data.score?.event === 'FOUR'   ? [150] :
+               [200, 100, 200],
+      actions,
+      // Silent for boundary updates, vibrate for wickets
+      silent: data.score?.event === 'FOUR',
     })
   );
 });

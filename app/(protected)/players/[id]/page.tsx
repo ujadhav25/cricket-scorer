@@ -34,12 +34,25 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
   const totalFours = player.batterScores.reduce((s, b) => s + b.fours, 0);
   const totalSixes = player.batterScores.reduce((s, b) => s + b.sixes, 0);
   const highScore = Math.max(0, ...player.batterScores.map((b) => b.runs));
+  const highScoreNotOut = player.batterScores.some((b) => b.runs === highScore && !b.isOut);
   const fifties = player.batterScores.filter((b) => b.runs >= 50 && b.runs < 100).length;
   const hundreds = player.batterScores.filter((b) => b.runs >= 100).length;
+  const notOuts = player.batterScores.filter((b) => !b.isOut).length;
+  const dismissals = player.batterScores.length - notOuts;
+  const battingAvg = dismissals > 0 ? (totalRuns / dismissals).toFixed(2) : totalRuns > 0 ? '∞' : '0.00';
 
   const totalWickets = player.bowlerScores.reduce((s, b) => s + b.wickets, 0);
   const totalBowlingRuns = player.bowlerScores.reduce((s, b) => s + b.runs, 0);
-  const totalBowlingBalls = player.bowlerScores.reduce((s, b) => s + b.overs * 6, 0);
+  const totalBowlingBalls = player.bowlerScores.reduce((s, b) => s + b.balls, 0);
+  const totalMaidens = player.bowlerScores.reduce((s, b) => s + b.maidens, 0);
+  const bestFig = player.bowlerScores.reduce<{ w: number; r: number } | null>((best, b) => {
+    if (!best) return { w: b.wickets, r: b.runs };
+    if (b.wickets > best.w || (b.wickets === best.w && b.runs < best.r)) return { w: b.wickets, r: b.runs };
+    return best;
+  }, null);
+  const bestBowling = bestFig ? `${bestFig.w}/${bestFig.r}` : '—';
+  const bowlingAvg = totalWickets > 0 ? (totalBowlingRuns / totalWickets).toFixed(2) : '—';
+  const fiveWickets = player.bowlerScores.filter((b) => b.wickets >= 5).length;
 
   // Chart data (chronological order)
   const battingChartData = [...player.batterScores].reverse().map((bs, i) => ({
@@ -87,12 +100,14 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
         </TabsList>
 
         <TabsContent value="batting">
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {[
+              { label: 'Matches', value: player.batterScores.length },
               { label: 'Runs', value: totalRuns },
-              { label: 'Innings', value: player.batterScores.length },
+              { label: 'Avg', value: battingAvg },
               { label: 'SR', value: calcStrikeRate(totalRuns, totalBalls) },
-              { label: 'HS', value: highScore },
+              { label: 'HS', value: `${highScore}${highScoreNotOut ? '*' : ''}` },
+              { label: 'NO', value: notOuts },
               { label: '50s', value: fifties },
               { label: '100s', value: hundreds },
               { label: '4s', value: totalFours },
@@ -130,12 +145,16 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
         </TabsContent>
 
         <TabsContent value="bowling">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
             {[
+              { label: 'Matches', value: player.bowlerScores.length },
               { label: 'Wickets', value: totalWickets },
-              { label: 'Innings', value: player.bowlerScores.length },
               { label: 'Economy', value: calcBowlingEconomy(totalBowlingRuns, totalBowlingBalls) },
+              { label: 'Avg', value: bowlingAvg },
               { label: 'Runs', value: totalBowlingRuns },
+              { label: 'Maidens', value: totalMaidens },
+              { label: 'Best', value: bestBowling },
+              { label: '5W', value: fiveWickets },
             ].map(({ label, value }) => (
               <Card key={label}>
                 <CardContent className="p-3 text-center">

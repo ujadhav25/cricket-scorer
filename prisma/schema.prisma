@@ -84,6 +84,7 @@ model Player {
   deliveriesBatted  Delivery[] @relation("DeliveryBatsman")
   deliveriesBowled  Delivery[] @relation("DeliveryBowler")
   deliveriesFielded Delivery[] @relation("DeliveryFielder")
+  motmMatches       Match[]    @relation("MatchMOTM")
 
   @@index([userId])
 }
@@ -176,6 +177,7 @@ model Match {
   shareToken    String       @unique @default(cuid())
   playingXI_A   String[]     @default([])
   playingXI_B   String[]     @default([])
+  motmPlayerId  String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -184,6 +186,7 @@ model Match {
   teamA      Team        @relation("MatchTeamA", fields: [teamAId], references: [id])
   teamB      Team        @relation("MatchTeamB", fields: [teamBId], references: [id])
   innings    Innings[]
+  motmPlayer Player?     @relation("MatchMOTM", fields: [motmPlayerId], references: [id])
 
   @@index([userId])
   @@index([tournamentId])

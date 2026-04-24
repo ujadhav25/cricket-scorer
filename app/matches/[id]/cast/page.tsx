@@ -99,7 +99,7 @@ export default async function CastPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* ── Team score cards ── */}
-          <div className="grid grid-cols-2 gap-4 shrink-0">
+          <div className="grid grid-cols-2 gap-3 shrink-0">
             {[
               { team: match.teamA, inn: teamAInn },
               { team: match.teamB, inn: teamBInn },
@@ -109,35 +109,35 @@ export default async function CastPage({ params }: { params: { id: string } }) {
               return (
                 <div
                   key={team.id}
-                  className={`relative rounded-2xl border p-5 md:p-6 overflow-hidden transition-all ${
+                  className={`relative rounded-2xl border p-3 sm:p-5 md:p-6 overflow-hidden transition-all ${
                     isCurrentBatting ? 'border-cricket-green/40 bg-cricket-green/5' : 'border-white/10 bg-white/[0.02]'
                   }`}
                 >
                   {isCurrentBatting && (
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cricket-green via-emerald-400 to-cricket-green" />
                   )}
-                  <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">{team.name}</p>
-                  <div className="flex items-end gap-2">
-                    <span className="text-6xl md:text-8xl font-black tabular-nums leading-none">
+                  <p className="text-[10px] sm:text-xs font-semibold text-white/50 uppercase tracking-widest mb-1 truncate">{team.name}</p>
+                  <div className="flex items-end gap-1.5">
+                    <span className="text-4xl sm:text-6xl md:text-8xl font-black tabular-nums leading-none">
                       {inn?.totalRuns ?? (isCurrentBatting ? currentInnings?.totalRuns ?? 0 : '—')}
                     </span>
-                    <span className="text-3xl md:text-5xl font-black text-white/40 mb-1">
+                    <span className="text-2xl sm:text-3xl md:text-5xl font-black text-white/40 mb-0.5">
                       /{inn?.totalWickets ?? (isCurrentBatting ? currentInnings?.totalWickets ?? 0 : '')}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                     {innLegalBalls !== null ? (
-                      <p className="text-base text-white/50">({formatOvers(innLegalBalls)} ov)</p>
+                      <p className="text-xs sm:text-base text-white/50">({formatOvers(innLegalBalls)} ov)</p>
                     ) : (
-                      <p className="text-base text-white/30">Yet to bat</p>
+                      <p className="text-xs sm:text-base text-white/30">Yet to bat</p>
                     )}
                     {isCurrentBatting && runRate && (
-                      <span className="text-base font-semibold text-cricket-green">RR {runRate}</span>
+                      <span className="text-xs sm:text-base font-semibold text-cricket-green">RR {runRate}</span>
                     )}
                   </div>
                   {isCurrentBatting && runsNeeded != null && runsNeeded > 0 && match.status !== 'COMPLETED' && (
-                    <div className="mt-3 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5">
-                      <p className="text-sm text-amber-400 font-semibold">
+                    <div className="mt-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1">
+                      <p className="text-xs text-amber-400 font-semibold">
                         Need {runsNeeded} off {(match.overs * 6) - totalBalls} balls
                       </p>
                     </div>
@@ -148,10 +148,10 @@ export default async function CastPage({ params }: { params: { id: string } }) {
           </div>
 
           {/* ── Batsmen + Bowler panel ── */}
-          <div className="grid grid-cols-5 gap-4 shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 shrink-0">
 
             {/* Batsmen — 3 cols */}
-            <div className="col-span-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+            <div className="sm:col-span-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4 md:p-5">
               <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-3">Batsmen</p>
               {activeBatsmen.length === 0 ? (
                 <p className="text-sm text-white/30 italic">No active batsmen</p>
@@ -192,35 +192,35 @@ export default async function CastPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Bowler — 2 cols */}
-            <div className="col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+            <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-4 md:p-5">
               <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-3">Bowling</p>
               {activeBowler ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center text-xs font-black text-red-400 shrink-0">
+                <div className="flex flex-col gap-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-red-500/20 flex items-center justify-center text-[10px] sm:text-xs font-black text-red-400 shrink-0">
                       {activeBowler.player.name.substring(0, 2).toUpperCase()}
                     </div>
-                    <p className="font-bold text-base leading-tight">{activeBowler.player.name}</p>
+                    <p className="font-bold text-sm sm:text-base leading-tight truncate">{activeBowler.player.name}</p>
                   </div>
                   {/* Big stats row */}
                   <div className="flex items-end gap-1">
-                    <span className="text-4xl md:text-5xl font-black tabular-nums leading-none">{activeBowler.wickets}</span>
-                    <span className="text-xl text-white/40 mb-0.5">/{activeBowler.runs}</span>
+                    <span className="text-3xl sm:text-4xl md:text-5xl font-black tabular-nums leading-none">{activeBowler.wickets}</span>
+                    <span className="text-lg sm:text-xl text-white/40 mb-0.5">/{activeBowler.runs}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-lg bg-white/5 p-2 text-center">
-                      <p className="text-[10px] text-white/40 uppercase">Overs</p>
-                      <p className="text-base font-bold tabular-nums">{formatOvers(activeBowler.balls)}</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <div className="rounded-lg bg-white/5 p-1.5 sm:p-2 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-white/40 uppercase">Overs</p>
+                      <p className="text-sm sm:text-base font-bold tabular-nums">{formatOvers(activeBowler.balls)}</p>
                     </div>
-                    <div className="rounded-lg bg-white/5 p-2 text-center">
-                      <p className="text-[10px] text-white/40 uppercase">Econ</p>
-                      <p className="text-base font-bold tabular-nums">
+                    <div className="rounded-lg bg-white/5 p-1.5 sm:p-2 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-white/40 uppercase">Econ</p>
+                      <p className="text-sm sm:text-base font-bold tabular-nums">
                         {activeBowler.balls > 0 ? ((activeBowler.runs / activeBowler.balls) * 6).toFixed(1) : '—'}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-white/5 p-2 text-center">
-                      <p className="text-[10px] text-white/40 uppercase">Mdns</p>
-                      <p className="text-base font-bold tabular-nums">{activeBowler.maidens}</p>
+                    <div className="rounded-lg bg-white/5 p-1.5 sm:p-2 text-center">
+                      <p className="text-[9px] sm:text-[10px] text-white/40 uppercase">Mdns</p>
+                      <p className="text-sm sm:text-base font-bold tabular-nums">{activeBowler.maidens}</p>
                     </div>
                   </div>
                 </div>
@@ -244,11 +244,11 @@ export default async function CastPage({ params }: { params: { id: string } }) {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
                 {currentOverBalls.map((d, i) => (
                   <div
                     key={i}
-                    className={`h-11 w-11 md:h-12 md:w-12 rounded-full flex items-center justify-center text-sm font-black border-2 shrink-0 ${
+                    className={`h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 rounded-full flex items-center justify-center text-xs sm:text-sm font-black border-2 shrink-0 ${
                       d.isWicket          ? 'bg-red-600 border-red-400 text-white' :
                       d.isWide            ? 'bg-yellow-500 border-yellow-300 text-black' :
                       d.isNoBall          ? 'bg-orange-500 border-orange-300 text-white' :
@@ -263,7 +263,7 @@ export default async function CastPage({ params }: { params: { id: string } }) {
                 ))}
                 {/* Empty placeholder dots for remaining balls */}
                 {Array.from({ length: Math.max(0, 6 - currentOverBalls.filter(d => !d.isWide && !d.isNoBall).length) }).map((_, i) => (
-                  <div key={`empty-${i}`} className="h-11 w-11 md:h-12 md:w-12 rounded-full border-2 border-dashed border-white/10 shrink-0" />
+                  <div key={`empty-${i}`} className="h-9 w-9 sm:h-11 sm:w-11 md:h-12 md:w-12 rounded-full border-2 border-dashed border-white/10 shrink-0" />
                 ))}
               </div>
             </div>

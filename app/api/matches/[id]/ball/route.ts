@@ -235,20 +235,90 @@ export async function POST(
     try {
       const matchInfo = await prisma.match.findUnique({
         where: { id: params.id },
-        select: { teamA: { select: { name: true } }, teamB: { select: { name: true } } },
+        select: {
+          teamA: { select: { name: true } },
+          teamB: { select: { name: true } },
+          overs: true,
+          innings: {
+            include: { battingTeam: true },
+            orderBy: { inningsNumber: 'asc' },
+          },
+        },
       });
-      const teamNames = `${matchInfo?.teamA.name} vs ${matchInfo?.teamB.name}`;
-      if (ballData.isWicket) {
-        const batter = await prisma.player.findUnique({ where: { id: ballData.batsmanId }, select: { name: true } });
-        await sendMatchPushNotification(params.id, `WICKET! 🎯 ${teamNames}`, `${batter?.name ?? 'Batsman'} is out! Score: ${innings.totalRuns}/${innings.totalWickets}`);
-      } else if (!ballData.isWide && !ballData.isNoBall) {
-        const batter = await prisma.batterScore.findUnique({
-          where: { inningsId_playerId: { inningsId: ballData.inningsId, playerId: ballData.batsmanId } },
-          select: { runs: true, player: { select: { name: true } } },
-        });
-        const runs = batter?.runs ?? 0;
-        if (runs === 50 || runs === 100 || runs === 150) {
-          await sendMatchPushNotification(params.id, `${runs === 50 ? '⭐ FIFTY' : runs === 100 ? '💯 CENTURY' : '🔥 150!'} — ${teamNames}`, `${batter?.player.name ?? 'Batsman'} reaches ${runs}!`);
+
+      if (matchInfo) {
+        const teamNames = `${matchInfo.teamA.name} vs ${matchInfo.teamB.name}`;
+        const inn1 = matchInfo.innings.find((i) => i.inningsNumber === 1);
+        const inn2 = matchInfo.innings.find((i) => i.inningsNumber === 2);
+
+        const fmtScore = (i: typeof inn1) => {
+          if (!i) return 'Yet to bat';
+          const overs = Math.floor(i.totalOvers);
+          const balls = Math.round((i.totalOvers - overs) * 6);
+          return `${i.totalRuns}/${i.totalWickets} (${overs}.${balls})`;
+        };
+
+        // Build status line
+        let statusLine = '';
+        if (inn2 && inn1) {
+          const needed = inn1.totalRuns + 1 - inn2.totalRuns;
+          const totalBallsMax = matchInfo.overs * 6;
+          const usedBalls = Math.round(inn2.totalOvers * 6);
+          const ballsLeft = totalBallsMax - usedBalls;
+          if (needed > 0) statusLine = `${inn2.battingTeam.name} need ${needed} off ${ballsLeft} balls`;
+          else statusLine = `${inn2.battingTeam.name} won`;
+        }
+
+        const scorePayload = {
+          teamA: matchInfo.teamA.name,
+          teamB: matchInfo.teamB.name,
+          scoreA: fmtScore(inn1),
+          scoreB: fmtScore(inn2),
+          status: statusLine,
+        };
+
+        if (ballData.isWicket) {
+          const batter = await prisma.player.findUnique({ where: { id: ballData.batsmanId }, select: { name: true } });
+          await sendMatchPushNotification(
+            params.id,
+            `🎯 WICKET! ${teamNames}`,
+            `${batter?.name ?? 'Batsman'} is out! ${innings.totalRuns}/${innings.totalWickets}`,
+            `/m/${(await prisma.match.findUnique({ where: { id: params.id }, select: { shareToken: true } }))?.shareToken ?? params.id}`,
+            { ...scorePayload, event: 'WICKET' },
+          );
+        } else if (ballData.runs === 6 && !ballData.isWide && !ballData.isNoBall) {
+          const batter = await prisma.player.findUnique({ where: { id: ballData.batsmanId }, select: { name: true } });
+          await sendMatchPushNotification(
+            params.id,
+            `💥 SIX! ${teamNames}`,
+            `${batter?.name ?? 'Batsman'} hits a maximum! ${innings.totalRuns}/${innings.totalWickets}`,
+            undefined,
+            { ...scorePayload, event: 'SIX' },
+          );
+        } else if (ballData.runs === 4 && !ballData.isWide && !ballData.isNoBall) {
+          const batter = await prisma.player.findUnique({ where: { id: ballData.batsmanId }, select: { name: true } });
+          await sendMatchPushNotification(
+            params.id,
+            `🏏 FOUR! ${teamNames}`,
+            `${batter?.name ?? 'Batsman'} hits a boundary! ${innings.totalRuns}/${innings.totalWickets}`,
+            undefined,
+            { ...scorePayload, event: 'FOUR' },
+          );
+        } else if (!ballData.isWide && !ballData.isNoBall) {
+          const batter = await prisma.batterScore.findUnique({
+            where: { inningsId_playerId: { inningsId: ballData.inningsId, playerId: ballData.batsmanId } },
+            select: { runs: true, player: { select: { name: true } } },
+          });
+          const runs = batter?.runs ?? 0;
+          if (runs === 50 || runs === 100 || runs === 150) {
+            await sendMatchPushNotification(
+              params.id,
+              `${runs === 50 ? '⭐ FIFTY' : runs === 100 ? '💯 CENTURY' : '🔥 150!'} — ${teamNames}`,
+              `${batter?.player.name ?? 'Batsman'} reaches ${runs}! ${innings.totalRuns}/${innings.totalWickets}`,
+              undefined,
+              { ...scorePayload, event: runs === 50 ? 'FIFTY' : 'CENTURY' },
+            );
+          }
         }
       }
     } catch (_) {

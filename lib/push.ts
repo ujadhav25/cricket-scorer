@@ -9,11 +9,27 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_MAILTO, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
+export interface PushPayload {
+  title: string;
+  body: string;
+  url?: string;
+  // Rich score data for lock-screen score card
+  score?: {
+    teamA: string;
+    teamB: string;
+    scoreA: string; // e.g. "207/6 (20)"
+    scoreB: string; // e.g. "92/7 (14.4)"
+    status: string; // e.g. "MI need 115 runs in 32 balls"
+    event?: string; // e.g. "WICKET" | "FOUR" | "SIX" | "FIFTY" | "CENTURY"
+  };
+}
+
 export async function sendMatchPushNotification(
   matchId: string,
   title: string,
   body: string,
   url?: string,
+  score?: PushPayload['score'],
 ) {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
 
@@ -21,7 +37,7 @@ export async function sendMatchPushNotification(
     where: { OR: [{ matchId }, { matchId: null }] },
   });
 
-  const payload = JSON.stringify({ title, body, url: url ?? `/matches/${matchId}` });
+  const payload = JSON.stringify({ title, body, url: url ?? `/matches/${matchId}`, score });
 
   await Promise.allSettled(
     subs.map((sub) =>
@@ -31,7 +47,6 @@ export async function sendMatchPushNotification(
           payload,
         )
         .catch(async (err: any) => {
-          // Remove expired/invalid subscriptions
           if (err.statusCode === 404 || err.statusCode === 410) {
             await prisma.pushSubscription.delete({ where: { endpoint: sub.endpoint } }).catch(() => {});
           }

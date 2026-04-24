@@ -105,9 +105,9 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleCopy}
-                className="h-10 rounded-xl border border-white/15 text-sm font-semibold hover:bg-white/5 transition"
+                className="h-10 rounded-xl border border-white/15 text-white text-sm font-semibold hover:bg-white/5 transition"
               >
-                Copy Link
+                {copied ? '✓ Copied!' : 'Copy Link'}
               </button>
               {'share' in navigator ? (
                 <button
