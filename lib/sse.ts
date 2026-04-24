@@ -11,15 +11,20 @@ if (!g._sseEmitter) {
 
 const emitter: EventEmitter = g._sseEmitter;
 
+export interface SsePayload {
+  event: string;
+  data?: Record<string, unknown>;
+}
+
 export const sseHub = {
   /** Called by the /live route when a viewer connects. Returns an unsub fn. */
-  subscribe(matchId: string, onEvent: (event: string) => void): () => void {
+  subscribe(matchId: string, onEvent: (payload: SsePayload) => void): () => void {
     emitter.on(`m:${matchId}`, onEvent);
     return () => emitter.off(`m:${matchId}`, onEvent);
   },
 
   /** Called by ball/innings/complete routes to push an event to all viewers. */
-  emit(matchId: string, event = 'update') {
-    emitter.emit(`m:${matchId}`, event);
+  emit(matchId: string, event = 'update', data?: Record<string, unknown>) {
+    emitter.emit(`m:${matchId}`, { event, data });
   },
 };

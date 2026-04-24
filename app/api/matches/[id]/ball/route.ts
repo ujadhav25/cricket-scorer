@@ -221,7 +221,14 @@ export async function POST(
       });
     }
 
-    // Push real-time update via SSE
+    // Push real-time update via SSE — include delivery data for cast animations
+    sseHub.emit(params.id, 'ball-recorded', {
+      runs: delivery.runs,
+      isWide: delivery.isWide,
+      isNoBall: delivery.isNoBall,
+      isWicket: delivery.isWicket,
+    });
+    // Also emit generic update so LiveMatchUpdater triggers a page refresh
     sseHub.emit(params.id, 'update');
 
     // Send push notification for milestones (non-fatal)

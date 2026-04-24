@@ -80,14 +80,14 @@ export default async function MatchDetailPage({ params }: { params: { id: string
       {match.status === 'COMPLETED' && <FireworksAnim winnerName={winnerName} matchId={match.id} />}
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="space-y-3">
+        <div>
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-xs mb-1">
             {match.tournament && <span className="text-amber-400 font-medium">{match.tournament.name}</span>}
             <span>{formatDate(match.createdAt)}</span>
             {match.venue && <span>· {match.venue}</span>}
           </div>
-          <h1 className="text-xl font-bold leading-tight">{match.teamA.name} vs {match.teamB.name}</h1>
+          <h1 className="text-lg font-bold leading-snug">{match.teamA.name} vs {match.teamB.name}</h1>
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
               match.status === 'LIVE' ? 'bg-red-500 text-white animate-pulse' :
@@ -104,7 +104,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           {match.status !== 'COMPLETED' && match.userId === session.user.id && (
             <Button asChild size="sm" className="bg-cricket-green hover:bg-cricket-green/90">
               <Link href={`/matches/${match.id}/score`}><Activity className="mr-1.5 h-4 w-4" />Score</Link>

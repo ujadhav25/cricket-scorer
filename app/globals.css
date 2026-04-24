@@ -4,6 +4,30 @@
 
 @layer base {
   :root {
+    --background: 0 0% 98%;
+    --foreground: 225 25% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 225 25% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 25% 8%;
+    --primary: 152 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 225 25% 8%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 43 100% 50%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 152 76% 36%;
+    --radius: 0.875rem;
+    --glass: 0 0% 100%;
+  }
+
+  .dark {
     --background: 225 25% 5%;
     --foreground: 210 40% 98%;
     --card: 225 25% 8%;
@@ -23,30 +47,7 @@
     --border: 225 15% 15%;
     --input: 225 15% 15%;
     --ring: 152 76% 44%;
-    --radius: 0.875rem;
     --glass: 225 25% 10%;
-  }
-
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 225 25% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 225 25% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 225 25% 8%;
-    --primary: 152 76% 36%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 225 25% 8%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 43 100% 56%;
-    --accent-foreground: 0 0% 5%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 152 76% 36%;
   }
 }
 
@@ -55,6 +56,12 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
 }
 
@@ -109,7 +116,7 @@ button, a, [role="button"] { min-height: 44px; }
     background-image:
       radial-gradient(at 15% 5%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
       radial-gradient(at 85% 95%, hsl(var(--accent) / 0.05) 0%, transparent 50%),
-      radial-gradient(at 50% 50%, hsl(225 25% 8%) 0%, hsl(var(--background)) 100%);
+      radial-gradient(at 50% 50%, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
   }
   .bg-mesh-subtle {
     background-image:

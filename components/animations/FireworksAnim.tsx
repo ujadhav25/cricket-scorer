@@ -23,10 +23,14 @@ export function FireworksAnim({ winnerName, matchId }: { winnerName?: string; ma
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const storageKey = `fireworks-seen-${matchId}`;
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !sessionStorage.getItem(storageKey);
-  });
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!sessionStorage.getItem(storageKey)) {
+      setVisible(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
 
   function dismiss() {
     sessionStorage.setItem(storageKey, '1');

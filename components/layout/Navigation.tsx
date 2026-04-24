@@ -13,6 +13,7 @@ import {
   History,
   Settings,
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,11 +30,12 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col md:flex bg-gradient-to-b from-card/95 via-card/90 to-card/80 backdrop-blur-xl border-r border-border/20">
-      <div className="flex h-16 items-center border-b border-border/15 px-6">
+      <div className="flex h-16 items-center justify-between border-b border-border/15 px-6">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <span className="text-2xl transition-transform duration-300 group-hover:rotate-12">🏏</span>
           <span className="text-lg font-bold text-gradient">CricScorer</span>
         </Link>
+        <ThemeToggle />
       </div>
       <nav className="flex-1 space-y-1 p-3 pt-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -79,7 +81,7 @@ export function Sidebar() {
 
 export function BottomNav() {
   const pathname = usePathname();
-  const items = NAV_ITEMS.slice(0, 5);
+  const items = NAV_ITEMS.slice(0, 4);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 glass-strong md:hidden">
@@ -109,6 +111,9 @@ export function BottomNav() {
             </Link>
           );
         })}
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <ThemeToggle />
+        </div>
       </div>
     </nav>
   );

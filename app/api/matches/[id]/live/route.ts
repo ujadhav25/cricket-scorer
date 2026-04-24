@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { sseHub } from '@/lib/sse';
+import { sseHub, type SsePayload } from '@/lib/sse';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -17,9 +17,10 @@ export function GET(
       ctrl.enqueue(enc.encode(': connected\n\n'));
 
       // Push SSE event to this client when a ball/innings/completion happens
-      const onEvent = (event: string) => {
+      const onEvent = ({ event, data }: SsePayload) => {
         try {
-          ctrl.enqueue(enc.encode(`event: ${event}\ndata: {}\n\n`));
+          const payload = data ? JSON.stringify(data) : '{}';
+          ctrl.enqueue(enc.encode(`event: ${event}\ndata: ${payload}\n\n`));
         } catch {
           // Client already gone — unsub is handled by req.signal below
         }
