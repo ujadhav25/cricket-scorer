@@ -19,7 +19,7 @@ export async function updatePlayerProfile(
   if (!session?.user?.id) return { error: 'Unauthorized' };
 
   const parsed = UpdatePlayerSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.errors[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   // Resolve the user's self player (first player owned by this user)
   const player = await prisma.player.findFirst({
