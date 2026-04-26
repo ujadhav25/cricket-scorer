@@ -46,21 +46,12 @@ export const metadata: Metadata = {
     title: 'CricScorer — Real-time Cricket Scoring',
     description:
       'Score cricket matches in real-time, manage tournaments, track player stats and share live scoreboards with spectators.',
-    images: [
-      {
-        url: '/opengraph-image',
-        width: 1200,
-        height: 630,
-        alt: 'CricScorer — Real-time Cricket Scoring',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'CricScorer — Real-time Cricket Scoring',
     description:
       'Score cricket matches in real-time, manage tournaments, track player stats and share live scoreboards with spectators.',
-    images: ['/opengraph-image'],
   },
   robots: {
     index: true,
