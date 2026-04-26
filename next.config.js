@@ -32,7 +32,9 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // Apply security headers to page routes only.
+        // Exclude: API routes, static assets, OG image, icons, SW, manifest.
+        source: '/((?!api|_next/static|_next/image|opengraph-image|icons|sw\\.js|manifest\\.json).*)',
         headers: securityHeaders,
       },
     ];
