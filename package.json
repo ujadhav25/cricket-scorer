@@ -1,6 +1,6 @@
 {
   "name": "cricket-scorer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -66,6 +67,7 @@
   "devDependencies": {
     "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.5.0",
+    "husky": "^9.1.7",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19"
   }
