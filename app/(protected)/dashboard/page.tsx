@@ -5,12 +5,40 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Plus, Activity, Trophy, Users, Shield, Radio, Clock, TrendingUp, Target, ArrowRight } from 'lucide-react';
+import { Plus, Activity, Trophy, Users, Shield, Radio, Clock, TrendingUp, Target, ArrowRight, User, Star } from 'lucide-react';
+import { getViewMode } from '@/lib/view-mode';
+
+export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   const userId = session.user.id;
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+
+  const player = await prisma.player.findFirst({
+    where: { userId },
+    select: { id: true, phone: true },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  // If profile is incomplete, the layout's <ClientNavigate> will redirect client-side.
+  // Here, just short-circuit to avoid rendering content before navigation fires.
+  if (!player?.phone || player.phone.trim() === '') {
+    return null;
+  }
+
+  const effectiveView = getViewMode();
+
+  if (effectiveView === 'player') {
+    return <PlayerDashboard userId={userId} playerId={player?.id ?? null} name={currentUser?.name ?? session.user.name ?? null} />;
+  }
+
+  // ─── Organizer Dashboard ──────────────────────────────────────────────────
 
   const [recentMatches, activeTournaments, playerCount, teamCount, totalMatchCount, analyticsData] = await Promise.all([
     prisma.match.findMany({
@@ -304,6 +332,198 @@ export default async function DashboardPage() {
             ))}
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Player Dashboard ─────────────────────────────────────────────────────────
+
+async function PlayerDashboard({
+  userId,
+  playerId,
+  name,
+}: {
+  userId: string;
+  playerId: string | null;
+  name: string | null;
+}) {
+  const player = await prisma.player.findUnique({
+    where: { id: playerId ?? '' },
+    include: {
+      teamPlayers: { include: { team: true } },
+      batterScores: {
+        include: { innings: { include: { match: { include: { teamA: true, teamB: true } } } } },
+        orderBy: { innings: { match: { createdAt: 'desc' } } },
+      },
+      bowlerScores: {
+        include: { innings: { include: { match: { include: { teamA: true, teamB: true } } } } },
+        orderBy: { innings: { match: { createdAt: 'desc' } } },
+      },
+      motmMatches: { select: { id: true } },
+    },
+  });
+
+  if (!player) {
+    return (
+      <div className="p-4 sm:p-6 text-center text-muted-foreground">
+        Player profile not found.
+      </div>
+    );
+  }
+
+  // Compute career batting stats
+  const totalRuns = player.batterScores.reduce((s, b) => s + b.runs, 0);
+  const innings = player.batterScores.length;
+  const notOuts = player.batterScores.filter((b) => !b.isOut).length;
+  const outs = innings - notOuts;
+  const average = outs > 0 ? (totalRuns / outs).toFixed(1) : innings > 0 ? '∞' : '—';
+  const totalBallsFaced = player.batterScores.reduce((s, b) => s + b.balls, 0);
+  const strikeRate = totalBallsFaced > 0 ? ((totalRuns / totalBallsFaced) * 100).toFixed(1) : '—';
+  const highScore = player.batterScores.reduce((hs, b) => Math.max(hs, b.runs), 0);
+  const fifties = player.batterScores.filter((b) => b.runs >= 50 && b.runs < 100).length;
+  const hundreds = player.batterScores.filter((b) => b.runs >= 100).length;
+
+  // Bowling stats
+  const totalWickets = player.bowlerScores.reduce((s, b) => s + b.wickets, 0);
+  const totalRunsConceded = player.bowlerScores.reduce((s, b) => s + b.runs, 0);
+  const totalOversBowled = player.bowlerScores.reduce((s, b) => s + b.overs, 0);
+  const economy = totalOversBowled > 0 ? (totalRunsConceded / totalOversBowled).toFixed(1) : '—';
+  const bowlingAvg = totalWickets > 0 ? (totalRunsConceded / totalWickets).toFixed(1) : '—';
+  const bestFigures = player.bowlerScores.reduce(
+    (best, b) => (b.wickets > best.w || (b.wickets === best.w && b.runs < best.r) ? { w: b.wickets, r: b.runs } : best),
+    { w: 0, r: 0 }
+  );
+
+  // Last 5 matches personal performance (by innings date)
+  const last5Batting = player.batterScores.slice(0, 5);
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
+            {name?.split(' ')[0] ?? 'Player'} <span className="inline-block">🏏</span>
+          </h1>
+          <p className="mt-1 text-muted-foreground">{player.name} · {player.battingStyle} bat · {player.bowlingStyle}</p>
+        </div>
+        {player.motmMatches.length > 0 && (
+          <div className="flex items-center gap-1.5 rounded-2xl bg-cricket-amber-500/10 border border-cricket-amber-500/20 px-3 py-2 text-sm font-semibold text-cricket-amber shrink-0">
+            <Star className="h-4 w-4 fill-current" /> {player.motmMatches.length}× MOTM
+          </div>
+        )}
+      </div>
+
+      {/* Teams */}
+      {player.teamPlayers.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {player.teamPlayers.map(({ team }) => (
+            <Link key={team.id} href={`/teams/${team.id}`}>
+              <span className="flex items-center gap-1.5 rounded-full border border-border/30 bg-white/[0.04] px-3 py-1.5 text-xs font-medium hover:border-cricket-green-500/40 transition-colors">
+                <Shield className="h-3 w-3 text-cricket-green" /> {team.name}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Career Batting */}
+      <div>
+        <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
+          <Activity className="h-5 w-5 text-cricket-green" /> Career Batting
+        </h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {[
+            { label: 'Runs', value: totalRuns },
+            { label: 'Innings', value: innings },
+            { label: 'Avg', value: average },
+            { label: 'SR', value: strikeRate },
+            { label: 'HS', value: highScore },
+            { label: '50s / 100s', value: `${fifties} / ${hundreds}` },
+          ].map(({ label, value }) => (
+            <Card key={label}>
+              <CardContent className="p-3 text-center">
+                <div className="text-2xl font-black">{value}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 font-medium uppercase tracking-wider">{label}</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Career Bowling */}
+      {totalOversBowled > 0 && (
+        <div>
+          <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
+            <Target className="h-5 w-5 text-cricket-amber" /> Career Bowling
+          </h2>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Wickets', value: totalWickets },
+              { label: 'Economy', value: economy },
+              { label: 'Avg', value: bowlingAvg },
+              { label: 'Best', value: bestFigures.w > 0 ? `${bestFigures.w}/${bestFigures.r}` : '—' },
+            ].map(({ label, value }) => (
+              <Card key={label}>
+                <CardContent className="p-3 text-center">
+                  <div className="text-2xl font-black">{value}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 font-medium uppercase tracking-wider">{label}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Last 5 matches */}
+      {last5Batting.length > 0 && (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-400" /> Recent Performances
+            </h2>
+            <Link href="/history" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
+              Full history <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {last5Batting.map((bs) => {
+              const match = bs.innings.match;
+              return (
+                <Link key={bs.id} href={`/matches/${match.id}`}>
+                  <Card className="hover:border-border/60 transition-all duration-200">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div>
+                        <p className="font-semibold text-sm">{match.teamA.name} vs {match.teamB.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{formatDate(match.createdAt)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black">
+                          {bs.runs}{!bs.isOut ? '*' : ''}
+                          <span className="text-sm font-normal text-muted-foreground ml-1">({bs.balls})</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {bs.fours}×4 · {bs.sixes}×6
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {innings === 0 && totalOversBowled === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+            <Activity className="h-8 w-8 text-muted-foreground/40 mb-3" />
+            <p className="text-muted-foreground">No match data yet</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Your stats will appear here once matches are recorded</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

@@ -13,8 +13,18 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
+  // Resolve user's own player so we can redirect stale URLs
+  const selfPlayer = await prisma.player.findFirst({
+    where: { userId: session.user.id },
+    select: { id: true },
+    orderBy: { createdAt: 'asc' },
+  });
+
   const player = await prisma.player.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: {
+      id: params.id,
+      userId: session.user.id,
+    },
     include: {
       batterScores: {
         include: { innings: { include: { match: { include: { teamA: true, teamB: true } } } } },
@@ -27,7 +37,13 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
     },
   });
 
-  if (!player) notFound();
+  if (!player) {
+    // Stale URL — redirect to user's actual self player or dashboard
+    if (selfPlayer && selfPlayer.id !== params.id) {
+      redirect(`/players/${selfPlayer.id}`);
+    }
+    redirect('/dashboard');
+  }
 
   const totalRuns = player.batterScores.reduce((s, b) => s + b.runs, 0);
   const totalBalls = player.batterScores.reduce((s, b) => s + b.balls, 0);

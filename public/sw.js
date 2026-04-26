@@ -1,5 +1,5 @@
-const CACHE_NAME = 'cricket-scorer-v1';
-const STATIC_ASSETS = ['/', '/dashboard', '/manifest.json'];
+const CACHE_NAME = 'cricket-scorer-v2';
+const STATIC_ASSETS = ['/manifest.json'];
 const BALL_QUEUE_STORE = 'ball-queue';
 
 // Open IndexedDB for queuing offline balls
@@ -101,6 +101,15 @@ self.addEventListener('fetch', (event) => {
   // Only cache GET requests, skip API routes
   if (event.request.method !== 'GET' || url.includes('/api/')) return;
 
+  // Navigation requests (HTML pages) — always network-first so cookies/auth are fresh
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Static assets — cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const networkFetch = fetch(event.request).then((response) => {

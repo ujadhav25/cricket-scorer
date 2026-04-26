@@ -16,17 +16,23 @@ export default auth((req: NextRequest & { auth: unknown }) => {
     loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
-  return NextResponse.next();
+  // Inject current pathname into REQUEST headers so server components can read it
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', req.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 });
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/players/:path*',
-    '/teams/:path*',
-    '/matches/:path*',
-    '/tournaments/:path*',
-    '/history/:path*',
-    '/settings/:path*',
+    '/dashboard',
+    '/dashboard/:path+',
+    '/players/:path+',
+    '/teams/:path+',
+    '/matches/:path+',
+    '/tournaments/:path+',
+    '/history',
+    '/history/:path+',
+    '/settings',
+    '/settings/:path+',
   ],
 };

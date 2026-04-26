@@ -10,11 +10,11 @@ import {
 } from '@/lib/api-helpers';
 
 const UpdatePlayerSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  phone: z.string().optional(),
+  name: z.string().min(1, 'Name is required').max(100),
+  phone: z.string().min(1, 'Phone is required'),
   avatarUrl: z.string().url().optional().nullable(),
-  battingStyle: z.enum(['Right', 'Left']).optional(),
-  bowlingStyle: z.enum(['Fast', 'Spin', 'Medium']).optional(),
+  battingStyle: z.enum(['Right', 'Left']),
+  bowlingStyle: z.enum(['Fast', 'Spin', 'Medium']),
 });
 
 export async function GET(
@@ -28,6 +28,7 @@ export async function GET(
     const player = await prisma.player.findFirst({
       where: { id: params.id, userId },
       include: {
+        user: { select: { email: true } },
         batterScores: {
           include: { innings: { include: { match: { include: { teamA: true, teamB: true } } } } },
           orderBy: { innings: { createdAt: 'desc' } },
@@ -60,10 +61,10 @@ export async function PUT(
     const parsed = UpdatePlayerSchema.safeParse(body);
     if (!parsed.success) return badRequestResponse(parsed.error.message);
 
-    const player = await prisma.player.findFirst({
-      where: { id: params.id, userId },
-    });
+    // Find by id only first, then verify ownership
+    const player = await prisma.player.findUnique({ where: { id: params.id } });
     if (!player) return notFoundResponse('Player');
+    if (player.userId !== userId) return unauthorizedResponse();
 
     const updated = await prisma.player.update({
       where: { id: params.id },

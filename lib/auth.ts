@@ -26,14 +26,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
   events: {
     async createUser({ user }) {
-      // Auto-create a Player record for every new account so they can be added to teams
-      if (user.id && user.name) {
-        await prisma.player.create({
-          data: {
-            userId: user.id,
-            name: user.name,
-          },
-        });
+      // Auto-create a Player record for every new account and link it
+      // Use email prefix as fallback if name is not provided
+      if (user.id) {
+        const playerName = user.name ?? user.email?.split('@')[0] ?? 'Player';
+        try {
+          await prisma.player.create({
+            data: {
+              userId: user.id,
+              name: playerName,
+            },
+          });
+        } catch (e) {
+          console.error('[createUser] Failed to auto-create player:', e);
+        }
       }
     },
   },

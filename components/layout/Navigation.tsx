@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -12,10 +13,22 @@ import {
   Trophy,
   History,
   Settings,
+  User,
+  ArrowLeftRight,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { AlertCircle } from 'lucide-react';
 
-const NAV_ITEMS = [
+const ORGANIZER_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/players', label: 'Players', icon: Users },
   { href: '/teams', label: 'Teams', icon: Shield },
@@ -25,8 +38,89 @@ const NAV_ITEMS = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
-export function Sidebar() {
+interface NavProps {
+  activeView: 'organizer' | 'player';
+  playerId?: string | null;
+  playerIncomplete?: boolean;
+}
+
+function getNavItems(activeView: 'organizer' | 'player', playerId?: string | null, playerIncomplete?: boolean) {
+  if (activeView === 'player') {
+    return [
+      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      ...(playerId
+        ? [{ href: playerIncomplete ? `/players/${playerId}/edit` : `/players/${playerId}`, label: 'My Profile', icon: User }]
+        : []),
+      { href: '/history', label: 'History', icon: History },
+      { href: '/settings', label: 'Settings', icon: Settings },
+    ];
+  }
+  return ORGANIZER_NAV;
+}
+
+function ViewSwitchButton({ activeView }: { activeView: 'organizer' | 'player' }) {
+  const [open, setOpen] = useState(false);
+
+  const next = activeView === 'organizer' ? 'player' : 'organizer';
+  const label = activeView === 'organizer' ? 'Switch to Player' : 'Switch to Organizer';
+  const nextLabel = next === 'organizer' ? 'Organizer' : 'Player';
+
+  function handleConfirm() {
+    setOpen(false);
+    // Set cookie directly in browser — no server round-trip, takes effect immediately
+    const oneYear = 60 * 60 * 24 * 365;
+    document.cookie = `view-mode=${next}; path=/; max-age=${oneYear}; samesite=lax`;
+    window.location.href = '/dashboard';
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className={cn(
+          'w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+          'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+        )}
+      >
+        <ArrowLeftRight className="h-[18px] w-[18px] shrink-0" />
+        <span>{label}</span>
+        <span className={cn(
+          'ml-auto text-[10px] font-semibold rounded-full px-1.5 py-0.5',
+          activeView === 'organizer'
+            ? 'bg-cricket-green-500/20 text-cricket-green'
+            : 'bg-blue-500/20 text-blue-400'
+        )}>
+          {activeView === 'organizer' ? 'ORG' : 'PLR'}
+        </span>
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Switch to {nextLabel} View?</DialogTitle>
+            <DialogDescription>
+              You are switching to the <span className="font-semibold text-foreground">{nextLabel}</span> view.
+              {next === 'player' ? ' You will see your player profile and stats.' : ' You will see your organizer dashboard, matches, teams, and tournaments.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleConfirm}
+              className={next === 'organizer' ? 'bg-cricket-green hover:bg-cricket-green/90' : 'bg-blue-600 hover:bg-blue-700'}
+            >
+              {`Yes, Switch to ${nextLabel}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+export function Sidebar({ activeView, playerId, playerIncomplete }: NavProps) {
   const pathname = usePathname();
+  const navItems = getNavItems(activeView, playerId, playerIncomplete);
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col md:flex bg-gradient-to-b from-card/95 via-card/90 to-card/80 backdrop-blur-xl border-r border-border/20">
@@ -37,10 +131,30 @@ export function Sidebar() {
         </Link>
         <ThemeToggle />
       </div>
+
+      {playerIncomplete && (
+        <div className="mx-3 mt-3 flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5">
+          <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-300 leading-snug">
+            Complete your player profile to unlock all features.
+          </p>
+        </div>
+      )}
+
       <nav className="flex-1 space-y-1 p-3 pt-4">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname.startsWith(href);
-          return (
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+          const isLocked = playerIncomplete && !href.endsWith('/edit');
+          return isLocked ? (
+            <span
+              key={href}
+              title="Complete your player profile first"
+              className="relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground/30 cursor-not-allowed select-none"
+            >
+              <Icon className="h-[18px] w-[18px]" />
+              {label}
+            </span>
+          ) : (
             <Link
               key={href}
               href={href}
@@ -66,12 +180,9 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="p-3 border-t border-border/20 space-y-2">
-        <div className="rounded-xl bg-gradient-to-br from-cricket-green-500/10 to-cricket-amber-500/10 p-3">
-          <p className="text-xs font-medium text-foreground/80">Pro Tip</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Share live scores with spectators via public links</p>
-        </div>
-        <p className="text-center text-[10px] text-muted-foreground/30 tabular-nums">
+      <div className="p-3 border-t border-border/20 space-y-1">
+        {!playerIncomplete && <ViewSwitchButton activeView={activeView} />}
+        <p className="text-center text-[10px] text-muted-foreground/30 tabular-nums pt-1">
           v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
         </p>
       </div>
@@ -79,15 +190,29 @@ export function Sidebar() {
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ activeView, playerId, playerIncomplete }: NavProps) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.slice(0, 4);
+  const navItems = getNavItems(activeView, playerId, playerIncomplete);
+  const items = navItems.slice(0, 4);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 glass-strong md:hidden">
       <div className="flex h-16 items-stretch">
         {items.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname.startsWith(href);
+          const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+          const isLocked = playerIncomplete && !href.endsWith('/edit');
+          if (isLocked) {
+            return (
+              <span
+                key={href}
+                title="Complete your player profile first"
+                className="relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground/25 cursor-not-allowed select-none"
+              >
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
+              </span>
+            );
+          }
           return (
             <Link
               key={href}
