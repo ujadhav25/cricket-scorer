@@ -31,8 +31,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const tournamentId = searchParams.get('tournamentId');
     const status = searchParams.get('status');
-    const page = parseInt(searchParams.get('page') ?? '1');
-    const limit = parseInt(searchParams.get('limit') ?? '20');
+    const rawPage = parseInt(searchParams.get('page') ?? '1', 10);
+    const rawLimit = parseInt(searchParams.get('limit') ?? '20', 10);
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 20;
     const skip = (page - 1) * limit;
 
     const where = {

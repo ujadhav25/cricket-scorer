@@ -63,10 +63,6 @@ export async function DELETE(
   if (!userId) return unauthorizedResponse();
 
   try {
-    // Debug: log userId vs match userId
-    const matchRaw = await prisma.match.findUnique({ where: { id: params.id }, select: { userId: true } });
-    console.log('[DELETE match] session userId:', userId, '| match userId:', matchRaw?.userId);
-
     const match = await prisma.match.findFirst({ where: { id: params.id, userId } });
     if (!match) return notFoundResponse('Match');
 

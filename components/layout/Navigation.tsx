@@ -69,7 +69,8 @@ function ViewSwitchButton({ activeView }: { activeView: 'organizer' | 'player' }
     setOpen(false);
     // Set cookie directly in browser — no server round-trip, takes effect immediately
     const oneYear = 60 * 60 * 24 * 365;
-    document.cookie = `view-mode=${next}; path=/; max-age=${oneYear}; samesite=lax`;
+    const secure = window.location.protocol === 'https:' ? '; secure' : '';
+    document.cookie = `view-mode=${next}; path=/; max-age=${oneYear}; samesite=lax${secure}`;
     window.location.href = '/dashboard';
   }
 

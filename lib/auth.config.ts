@@ -7,7 +7,9 @@ export const authConfig = {
     verifyRequest: '/verify',
   },
   session: { strategy: 'jwt' as const },
-  trustHost: true,
+  // AUTH_URL / NEXTAUTH_URL must be set in production env vars.
+  // trustHost is needed for Vercel proxy; set AUTH_URL to your canonical domain to prevent host-header injection.
+  trustHost: process.env.AUTH_URL ? false : true,
   callbacks: {
     authorized({ auth }) {
       return !!auth?.user;

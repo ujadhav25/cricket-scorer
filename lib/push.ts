@@ -33,8 +33,10 @@ export async function sendMatchPushNotification(
 ) {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
 
+  // Only notify subscribers explicitly subscribed to this match
+  // (avoids broadcasting private match updates to all global subscribers)
   const subs = await prisma.pushSubscription.findMany({
-    where: { OR: [{ matchId }, { matchId: null }] },
+    where: { matchId },
   });
 
   const payload = JSON.stringify({ title, body, url: url ?? `/matches/${matchId}`, score });

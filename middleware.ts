@@ -13,7 +13,11 @@ export default auth((req: NextRequest & { auth: unknown }) => {
   // All other matched routes require auth
   if (!(req as any).auth) {
     const loginUrl = new URL('/login', req.nextUrl.origin);
-    loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
+    // Only set same-origin relative paths as callbackUrl to prevent open redirect
+    const pathname = req.nextUrl.pathname;
+    if (pathname.startsWith('/') && !pathname.startsWith('//')) {
+      loginUrl.searchParams.set('callbackUrl', pathname);
+    }
     return NextResponse.redirect(loginUrl);
   }
   // Inject current pathname into REQUEST headers so server components can read it

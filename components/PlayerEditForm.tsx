@@ -44,7 +44,8 @@ export function PlayerEditForm({ id, defaultValues, email }: Props) {
       toast({ title: 'Profile saved!', variant: 'success' });
       // Ensure player view is active after completing profile (overrides any stale organizer cookie)
       const oneYear = 60 * 60 * 24 * 365;
-      document.cookie = `view-mode=player; path=/; max-age=${oneYear}; samesite=lax`;
+      const secure = window.location.protocol === 'https:' ? '; secure' : '';
+      document.cookie = `view-mode=player; path=/; max-age=${oneYear}; samesite=lax${secure}`;
       window.location.href = `/players/${result.playerId ?? id}`;
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
