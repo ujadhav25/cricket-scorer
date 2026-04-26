@@ -16,8 +16,8 @@ import { updatePlayerProfile } from '@/app/actions/updatePlayerProfile';
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   phone: z.string().min(1, 'Phone number is required'),
-  battingStyle: z.enum(['Right', 'Left'], { required_error: 'Batting style is required' }),
-  bowlingStyle: z.enum(['Fast', 'Medium', 'Spin'], { required_error: 'Bowling style is required' }),
+  battingStyle: z.enum(['Right', 'Left'], { message: 'Batting style is required' }),
+  bowlingStyle: z.enum(['Fast', 'Medium', 'Spin'], { message: 'Bowling style is required' }),
 });
 type FormData = z.infer<typeof schema>;
 
