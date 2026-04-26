@@ -6,7 +6,9 @@ dotenv.config();
 export default defineConfig({
   earlyAccess: true,
   datasource: {
-    url: process.env.DATABASE_URL,
+    // DIRECT_URL is the non-pooled Neon connection — required for migrate advisory locking
+    // DATABASE_URL is the pooled connection — used by the runtime adapter
+    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
   },
 });
