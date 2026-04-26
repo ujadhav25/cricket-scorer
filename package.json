@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "NEXT_PUBLIC_APP_VERSION=$npm_package_version next dev",
-    "build": "prisma migrate deploy && NEXT_PUBLIC_APP_VERSION=$npm_package_version next build",
+    "build": "NEXT_PUBLIC_APP_VERSION=$npm_package_version next build",
+    "migrate:deploy": "prisma migrate deploy",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
