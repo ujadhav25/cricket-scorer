@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { Sidebar, BottomNav } from '@/components/layout/Navigation';
+import { Sidebar, BottomNav, MobileHeader } from '@/components/layout/Navigation';
 import { ClientNavigate } from '@/components/ClientNavigate';
 import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import { PushPermissionPrompt } from '@/components/PushPermissionPrompt';
@@ -53,9 +53,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       {/* Redirect to edit only when in player view with incomplete profile */}
       {playerIncomplete && editPath && <ClientNavigate to={editPath} />}
       <Sidebar activeView={activeView} playerId={player?.id ?? null} playerIncomplete={playerIncomplete} />
-      <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+      <main className="flex-1 overflow-y-auto pb-20 pt-12 md:pt-0 md:pb-0">
         {children}
       </main>
+      <MobileHeader activeView={activeView} />
       <BottomNav activeView={activeView} playerId={player?.id ?? null} playerIncomplete={playerIncomplete} />
       <PushPermissionPrompt />
       <PwaInstallPrompt />
