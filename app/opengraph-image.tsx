@@ -22,6 +22,145 @@ export default function Image() {
           fontFamily: 'sans-serif',
         }}
       >
+        {/* Background glow — top-left */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-120px',
+            left: '-120px',
+            width: '500px',
+            height: '500px',
+            borderRadius: '50%',
+            background: 'rgba(22,163,74,0.18)',
+            display: 'flex',
+          }}
+        />
+        {/* Background glow — bottom-right */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '-120px',
+            right: '-120px',
+            width: '500px',
+            height: '500px',
+            borderRadius: '50%',
+            background: 'rgba(22,163,74,0.10)',
+            display: 'flex',
+          }}
+        />
+
+        {/* Content */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '28px',
+            position: 'relative',
+            zIndex: 10,
+          }}
+        >
+          {/* Logo badge + app name */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            {/* Badge — green circle with "CS" text (no emoji, Satori-safe) */}
+            <div
+              style={{
+                width: '88px',
+                height: '88px',
+                borderRadius: '22px',
+                background: '#16a34a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 48px rgba(22,163,74,0.55)',
+              }}
+            >
+              <span style={{ fontSize: '38px', fontWeight: 900, color: '#ffffff', letterSpacing: '-1px' }}>
+                CS
+              </span>
+            </div>
+
+            <span
+              style={{
+                fontSize: '72px',
+                fontWeight: 900,
+                color: '#ffffff',
+                letterSpacing: '-2px',
+              }}
+            >
+              CricScorer
+            </span>
+          </div>
+
+          {/* Tagline */}
+          <p
+            style={{
+              fontSize: '30px',
+              color: 'rgba(255,255,255,0.55)',
+              textAlign: 'center',
+              maxWidth: '720px',
+              lineHeight: 1.4,
+              margin: 0,
+            }}
+          >
+            Real-time cricket scoring, tournaments and player stats
+          </p>
+
+          {/* Feature pills — text only, no emoji */}
+          <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
+            {['Live Scoring', 'Tournaments', 'Stats', 'Share'].map((feat) => (
+              <div
+                key={feat}
+                style={{
+                  padding: '10px 24px',
+                  borderRadius: '100px',
+                  background: 'rgba(22,163,74,0.15)',
+                  border: '1px solid rgba(22,163,74,0.40)',
+                  color: '#4ade80',
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  display: 'flex',
+                }}
+              >
+                {feat}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom URL strip */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            color: 'rgba(255,255,255,0.28)',
+            fontSize: '18px',
+          }}
+        >
+          cricket-scorer-yq3m.vercel.app
+        </div>
+      </div>
+    ),
+    { ...size }
+  );
+}
+
+      <div
+        style={{
+          width: '1200px',
+          height: '630px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #0f172a 0%, #0f2a1a 50%, #0f172a 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+          fontFamily: 'sans-serif',
+        }}
+      >
         {/* Background glow blobs */}
         <div
           style={{
