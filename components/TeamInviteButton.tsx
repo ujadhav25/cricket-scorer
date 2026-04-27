@@ -62,10 +62,10 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={(e) => e.target === e.currentTarget && setOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-5 space-y-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-5 space-y-4 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg text-white">Invite Players</h2>

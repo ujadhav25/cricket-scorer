@@ -171,23 +171,27 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
     : null;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{tournament.name}</h1>
-          <p className="text-muted-foreground">
-            {isBilateral ? 'Bilateral Series' : tournament.format} · {tournament.teams.length} teams
-            {isBilateral && (tournament as any).totalMatches ? ` · ${(tournament as any).totalMatches} matches` : ''}
-          </p>
-          {bilateralWinner && (
-            <p className="text-sm font-semibold text-yellow-400 mt-1">🏆 {bilateralWinner} leads the series</p>
-          )}
-          {tournament.startDate && <p className="text-sm text-muted-foreground">Starts: {formatDate(tournament.startDate)}</p>}
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold leading-tight">{tournament.name}</h1>
+            <p className="text-sm text-muted-foreground">
+              {isBilateral ? 'Bilateral Series' : tournament.format} · {tournament.teams.length} teams
+              {isBilateral && (tournament as any).totalMatches ? ` · ${(tournament as any).totalMatches} matches` : ''}
+            </p>
+            {bilateralWinner && (
+              <p className="text-sm font-semibold text-yellow-400 mt-1">🏆 {bilateralWinner} leads the series</p>
+            )}
+            {tournament.startDate && <p className="text-sm text-muted-foreground">Starts: {formatDate(tournament.startDate)}</p>}
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
             <Link href={`/tournaments/${tournament.id}/edit`}><Edit className="h-4 w-4" /></Link>
           </Button>
+        </div>
+        {/* Action buttons row */}
+        <div className="flex flex-wrap gap-2">
           <TournamentJoinButton joinToken={tournament.joinToken} tournamentName={tournament.name} />
           <ShareTournamentButton shareToken={tournament.shareToken} tournamentName={tournament.name} />
           <GenerateFixturesButton tournamentId={tournament.id} teamCount={tournament.teams.length} matchCount={upcoming.length + completed.length} format={tournament.format} />
@@ -196,13 +200,13 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
       </div>
 
       <Tabs defaultValue="points">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="points">{isBilateral ? 'Series Score' : 'Points'}</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="results">Results</TabsTrigger>
-          <TabsTrigger value="groups">Groups</TabsTrigger>
-          <TabsTrigger value="caps">🧢 Caps</TabsTrigger>
-          <TabsTrigger value="stats">Stats</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto gap-0 h-auto p-1 justify-start">
+          <TabsTrigger value="points" className="shrink-0 text-xs px-3 py-1.5">{isBilateral ? 'Series' : 'Points'}</TabsTrigger>
+          <TabsTrigger value="upcoming" className="shrink-0 text-xs px-3 py-1.5">Upcoming</TabsTrigger>
+          <TabsTrigger value="results" className="shrink-0 text-xs px-3 py-1.5">Results</TabsTrigger>
+          <TabsTrigger value="groups" className="shrink-0 text-xs px-3 py-1.5">Groups</TabsTrigger>
+          <TabsTrigger value="caps" className="shrink-0 text-xs px-3 py-1.5">🧢 Caps</TabsTrigger>
+          <TabsTrigger value="stats" className="shrink-0 text-xs px-3 py-1.5">Stats</TabsTrigger>
         </TabsList>
 
         <TabsContent value="points">
@@ -263,30 +267,30 @@ export default async function TournamentDetailPage({ params }: { params: { id: s
             <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                    <th className="pb-2 pr-4">Team</th>
-                    <th className="pb-2 pr-3 text-right">P</th>
-                    <th className="pb-2 pr-3 text-right">W</th>
-                    <th className="pb-2 pr-3 text-right">L</th>
-                    <th className="pb-2 pr-3 text-right">T</th>
-                    <th className="pb-2 pr-3 text-right">NRR</th>
-                    <th className="pb-2 text-right font-bold">Pts</th>
+                    <th className="pb-2 pr-2">Team</th>
+                    <th className="pb-2 px-1 text-right">P</th>
+                    <th className="pb-2 px-1 text-right">W</th>
+                    <th className="pb-2 px-1 text-right">L</th>
+                    <th className="pb-2 px-1 text-right">T</th>
+                    <th className="pb-2 px-1 text-right">NRR</th>
+                    <th className="pb-2 pl-1 text-right font-bold">Pts</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pointsTable.map((row, i) => (
                     <tr key={row.id} className={`border-b border-border/50 ${i === 0 ? 'bg-cricket-green/5' : ''}`}>
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-full" style={{ backgroundColor: row.color }} />
-                          <span className="font-medium">{row.name}</span>
+                      <td className="py-2.5 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: row.color }} />
+                          <span className="font-medium truncate max-w-[90px] sm:max-w-none">{row.name}</span>
                         </div>
                       </td>
-                      <td className="py-3 pr-3 text-right text-muted-foreground">{row.played}</td>
-                      <td className="py-3 pr-3 text-right text-green-400">{row.won}</td>
-                      <td className="py-3 pr-3 text-right text-red-400">{row.lost}</td>
-                      <td className="py-3 pr-3 text-right text-amber-400">{row.tied}</td>
-                      <td className={`py-3 pr-3 text-right text-xs font-mono ${row.nrr.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{row.nrr}</td>
-                      <td className="py-3 text-right font-black text-cricket-green">{row.points}</td>
+                      <td className="py-2.5 px-1 text-right text-muted-foreground">{row.played}</td>
+                      <td className="py-2.5 px-1 text-right text-green-400">{row.won}</td>
+                      <td className="py-2.5 px-1 text-right text-red-400">{row.lost}</td>
+                      <td className="py-2.5 px-1 text-right text-amber-400">{row.tied}</td>
+                      <td className={`py-2.5 px-1 text-right text-xs font-mono ${row.nrr.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{row.nrr}</td>
+                      <td className="py-2.5 pl-1 text-right font-black text-cricket-green">{row.points}</td>
                     </tr>
                   ))}
                 </tbody>

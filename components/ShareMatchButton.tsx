@@ -51,13 +51,13 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={(e) => e.target === e.currentTarget && setOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-6 space-y-5">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-6 space-y-5 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg">Share Match</h2>
+              <h2 className="font-bold text-lg text-white">Share Match</h2>
               <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
@@ -105,7 +105,7 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleCopy}
-                className="h-10 rounded-xl border border-white/15 text-white text-sm font-semibold hover:bg-white/5 transition"
+                className="h-10 rounded-xl border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition"
               >
                 {copied ? '✓ Copied!' : 'Copy Link'}
               </button>
