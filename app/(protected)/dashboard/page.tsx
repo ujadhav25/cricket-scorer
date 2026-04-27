@@ -423,12 +423,24 @@ async function PlayerDashboard({
           <h2 className="mb-3 text-lg font-bold flex items-center gap-2">
             <Shield className="h-5 w-5 text-cricket-green" /> My Teams
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {player.teamPlayers.map(({ team }) => (
               <Link key={team.id} href={`/teams/${team.id}`}>
-                <span className="flex items-center gap-1.5 rounded-full border border-border/30 bg-white/[0.04] px-3 py-1.5 text-xs font-medium hover:border-cricket-green-500/40 transition-colors">
-                  <Shield className="h-3 w-3 text-cricket-green" /> {team.name}
-                </span>
+                <div className="group flex items-center gap-3 rounded-2xl border border-border/50 hover:border-cricket-green/30 bg-card hover:bg-cricket-green/5 p-3 transition-all duration-200">
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0"
+                    style={{ backgroundColor: (team as any).color ?? '#16a34a' }}
+                  >
+                    {team.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">{team.name}</p>
+                    {(team as any).homeGround && (
+                      <p className="text-xs text-muted-foreground truncate">{(team as any).homeGround}</p>
+                    )}
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-cricket-green ml-auto shrink-0 transition-colors" />
+                </div>
               </Link>
             ))}
           </div>

@@ -59,12 +59,12 @@ export default function JoinTeamPage() {
   // Fetch profile + auto-join if signed in
   useEffect(() => {
     if (!session?.user || !team) return;
-    fetch('/api/profile')
+    fetch('/api/players/me')
       .then((r) => r.ok ? r.json() : null)
       .then((p) => {
+        // p is the Player record (name set by the player themselves), not the Google account name
         const name = p?.name?.trim() || session?.user?.name?.trim() || '';
         if (name) {
-          // Auto-join: use existing player's batting/bowling if available, otherwise defaults
           doJoin({
             name,
             phone: p?.phone ?? undefined,
@@ -72,7 +72,6 @@ export default function JoinTeamPage() {
             bowlingStyle: p?.bowlingStyle ?? 'Medium',
           });
         } else {
-          // Only show form if we truly have no name at all
           if (p) {
             reset({ name: '', phone: p.phone ?? '', battingStyle: 'Right', bowlingStyle: 'Medium' });
           }

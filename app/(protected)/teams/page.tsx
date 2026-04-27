@@ -64,39 +64,78 @@ export default async function TeamsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {teams.map((team) => (
-            <Link key={team.id} href={`/teams/${team.id}`}>
-              <Card className="group hover:border-border/60 hover:shadow-lg transition-all duration-300">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div
-                      className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                      style={{ backgroundColor: team.color }}
-                    >
-                      {team.name.slice(0, 2).toUpperCase()}
+          {teams.map((team) => {
+            const totalMatches = team._count.matchesAsTeamA + team._count.matchesAsTeamB;
+            const visiblePlayers = team.players.slice(0, 6);
+            const extraPlayers = team.players.length - visiblePlayers.length;
+            return (
+              <Link key={team.id} href={`/teams/${team.id}`}>
+                <Card className="group overflow-hidden hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 border-border/50 hover:border-border">
+                  {/* Colored banner */}
+                  <div className="h-2 w-full" style={{ backgroundColor: team.color }} />
+                  <CardContent className="p-5">
+                    {/* Avatar + name */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-black text-base shrink-0 shadow-lg"
+                        style={{ backgroundColor: team.color }}
+                      >
+                        {team.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-base leading-tight truncate">{team.name}</p>
+                        {team.homeGround
+                          ? <p className="text-xs text-muted-foreground truncate mt-0.5">{team.homeGround}</p>
+                          : <p className="text-xs text-muted-foreground/50 mt-0.5">No home ground</p>
+                        }
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">{team.name}</p>
-                      {team.homeGround && <p className="text-xs text-muted-foreground">{team.homeGround}</p>}
+
+                    {/* Stats row */}
+                    <div className="flex items-center gap-4 mb-4 text-sm">
+                      <div className="text-center">
+                        <p className="font-black text-lg leading-none">{team.players.length}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Players</p>
+                      </div>
+                      <div className="h-8 w-px bg-border/50" />
+                      <div className="text-center">
+                        <p className="font-black text-lg leading-none">{totalMatches}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Matches</p>
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {team.players.length} player{team.players.length !== 1 ? 's' : ''}
-                    &nbsp;·&nbsp;
-                    {team._count.matchesAsTeamA + team._count.matchesAsTeamB} matches
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {team.players.slice(0, 5).map(({ player }) => (
-                      <span key={player.id} className="rounded-lg bg-white/[0.04] border border-border/20 px-2 py-0.5 text-xs">{player.name.split(' ')[0]}</span>
-                    ))}
-                    {team.players.length > 5 && (
-                      <span className="rounded-lg bg-white/[0.04] border border-border/20 px-2 py-0.5 text-xs">+{team.players.length - 5}</span>
+
+                    {/* Player avatars */}
+                    {team.players.length > 0 ? (
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex -space-x-2">
+                          {visiblePlayers.map(({ player }) => (
+                            <div
+                              key={player.id}
+                              className="h-7 w-7 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold ring-1 ring-border/20"
+                              title={player.name}
+                            >
+                              {player.name.slice(0, 1).toUpperCase()}
+                            </div>
+                          ))}
+                          {extraPlayers > 0 && (
+                            <div className="h-7 w-7 rounded-full border-2 border-background bg-muted/80 flex items-center justify-center text-[10px] font-bold text-muted-foreground ring-1 ring-border/20">
+                              +{extraPlayers}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-1 truncate">
+                          {visiblePlayers.map(({ player }) => player.name.split(' ')[0]).join(', ')}
+                          {extraPlayers > 0 ? ` +${extraPlayers}` : ''}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground/50 italic">No players yet</p>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getInitials, calcStrikeRate, calcBowlingEconomy } from '@/lib/utils';
 import { Edit } from 'lucide-react';
 import { BattingChart, BowlingChart } from '@/components/PlayerCharts';
+import { getViewMode } from '@/lib/view-mode';
 
 export default async function PlayerProfilePage({ params }: { params: { id: string } }) {
   const session = await auth();
@@ -57,6 +58,8 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
   const dismissals = player.batterScores.length - notOuts;
   const battingAvg = dismissals > 0 ? (totalRuns / dismissals).toFixed(2) : totalRuns > 0 ? '∞' : '0.00';
 
+  const isOrganizerView = getViewMode() === 'organizer';
+
   const totalWickets = player.bowlerScores.reduce((s, b) => s + b.wickets, 0);
   const totalBowlingRuns = player.bowlerScores.reduce((s, b) => s + b.runs, 0);
   const totalBowlingBalls = player.bowlerScores.reduce((s, b) => s + b.balls, 0);
@@ -103,9 +106,11 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
             </p>
           </div>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/players/${player.id}/edit`}><Edit className="mr-2 h-4 w-4" />Edit</Link>
-        </Button>
+        {!isOrganizerView && (
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/players/${player.id}/edit`}><Edit className="mr-2 h-4 w-4" />Edit</Link>
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="batting">

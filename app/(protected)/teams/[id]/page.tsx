@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getInitials } from '@/lib/utils';
 import { Edit, UserPlus } from 'lucide-react';
 import { TeamInviteButton } from '@/components/TeamInviteButton';
+import { RemovePlayerButton } from '@/components/RemovePlayerButton';
 
 export default async function TeamDetailPage({ params }: { params: { id: string } }) {
   const session = await auth();
@@ -30,6 +31,8 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
   });
 
   if (!team) notFound();
+
+  const isOwnerOrCaptain = team.userId === session.user.id || (team as any).captainUserId === session.user.id;
 
   const allMatches = [
     ...team.matchesAsTeamA.map((m) => ({ ...m, isTeamA: true })),
@@ -112,15 +115,20 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
           ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {team.players.map(({ player }) => (
-              <Link key={player.id} href={`/players/${player.id}`} className="flex items-center gap-2 rounded-lg border border-border p-2 hover:border-cricket-green/40 transition-colors">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                  {getInitials(player.name)}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{player.name}</p>
-                  <p className="text-xs text-muted-foreground">{player.battingStyle[0]}HB · {player.bowlingStyle[0]}</p>
-                </div>
-              </Link>
+              <div key={player.id} className="flex items-center gap-2 rounded-lg border border-border p-2 hover:border-cricket-green/40 transition-colors">
+                <Link href={`/players/${player.id}`} className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold shrink-0">
+                    {getInitials(player.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{player.name}</p>
+                    <p className="text-xs text-muted-foreground">{player.battingStyle[0]}HB · {player.bowlingStyle[0]}</p>
+                  </div>
+                </Link>
+                {isOwnerOrCaptain && (
+                  <RemovePlayerButton teamId={team.id} playerId={player.id} />
+                )}
+              </div>
             ))}
           </div>
           )}

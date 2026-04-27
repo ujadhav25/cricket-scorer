@@ -58,36 +58,22 @@ export async function POST(
       return NextResponse.json({ error: 'You are already a member of this team', code: 'ALREADY_MEMBER' }, { status: 409 });
     }
 
-    // Use existing player record if available, otherwise create one
+    // Find the existing player record for this user (linked by userId / email account)
     let player = await prisma.player.findFirst({
       where: { userId },
       orderBy: { createdAt: 'asc' },
     });
 
     if (player) {
-      // Update name/phone but preserve existing batting/bowling styles
+      // Player already exists — just add them to the team. Never overwrite their name.
       player = await prisma.player.update({
         where: { id: player.id },
         data: {
-          name,
-          phone: phone ?? player.phone,
           teamPlayers: { create: { teamId: team.id } },
         },
       });
     } else {
-      // Dedup by phone within same team (only for new players)
-      if (phone) {
-        const existing = await prisma.player.findFirst({
-          where: { phone },
-          include: { teamPlayers: { where: { teamId: team.id } } },
-        });
-        if (existing?.teamPlayers.length) {
-          return NextResponse.json(
-            { error: 'A player with this phone number is already in the team', code: 'PHONE_EXISTS' },
-            { status: 409 }
-          );
-        }
-      }
+      // No existing player — create one using the name they provided
       player = await prisma.player.create({
         data: {
           userId,

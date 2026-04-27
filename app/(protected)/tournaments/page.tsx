@@ -6,18 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trophy } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { getViewMode } from '@/lib/view-mode';
 
 export default async function TournamentsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
+  const isOrganizerView = getViewMode() === 'organizer';
+
   const tournaments = await prisma.tournament.findMany({
-    where: {
-      OR: [
-        { userId: session.user.id },
-        { teams: { some: { team: { players: { some: { player: { userId: session.user.id } } } } } } },
-      ],
-    },
+    where: isOrganizerView
+      ? { userId: session.user.id }
+      : {
+          OR: [
+            { userId: session.user.id },
+            { teams: { some: { team: { players: { some: { player: { userId: session.user.id } } } } } } },
+          ],
+        },
     include: {
       teams: { include: { team: true } },
       _count: { select: { matches: true } },
@@ -32,9 +37,11 @@ export default async function TournamentsPage() {
           <h1 className="text-2xl font-bold">Tournaments</h1>
           <p className="text-muted-foreground">{tournaments.length} tournament{tournaments.length !== 1 ? 's' : ''}</p>
         </div>
-        <Button asChild className="bg-cricket-green hover:bg-cricket-green/90">
-          <Link href="/tournaments/new"><Plus className="mr-2 h-4 w-4" />New</Link>
-        </Button>
+        {isOrganizerView && (
+          <Button asChild className="bg-cricket-green hover:bg-cricket-green/90">
+            <Link href="/tournaments/new"><Plus className="mr-2 h-4 w-4" />New</Link>
+          </Button>
+        )}
       </div>
 
       {tournaments.length === 0 ? (

@@ -6,19 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Activity, Trophy, Clock, ChevronRight, Circle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { getViewMode } from '@/lib/view-mode';
 
 export default async function MatchesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
+  const isOrganizerView = getViewMode() === 'organizer';
+
   const matches = await prisma.match.findMany({
-    where: {
-      OR: [
-        { userId: session.user.id },
-        { teamA: { players: { some: { player: { userId: session.user.id } } } } },
-        { teamB: { players: { some: { player: { userId: session.user.id } } } } },
-      ],
-    },
+    where: isOrganizerView
+      ? { userId: session.user.id }
+      : {
+          OR: [
+            { userId: session.user.id },
+            { teamA: { players: { some: { player: { userId: session.user.id } } } } },
+            { teamB: { players: { some: { player: { userId: session.user.id } } } } },
+          ],
+        },
     include: {
       teamA: true, teamB: true,
       tournament: { select: { name: true } },
