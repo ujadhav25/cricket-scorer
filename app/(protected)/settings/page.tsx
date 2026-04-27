@@ -47,6 +47,10 @@ export default async function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <p className="text-xs text-muted-foreground/40 text-center">
+        v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
+      </p>
     </div>
   );
 }
