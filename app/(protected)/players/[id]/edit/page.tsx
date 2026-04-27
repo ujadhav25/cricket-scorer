@@ -10,9 +10,6 @@ export default async function EditPlayerPage({ params }: { params: { id: string 
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  // Organizers cannot edit players — only players can edit their own profile
-  if (getViewMode() === 'organizer') redirect(`/players/${params.id}`);
-
   // Resolve the user's self player (first player owned by this user)
   const userRecord = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -38,6 +35,10 @@ export default async function EditPlayerPage({ params }: { params: { id: string 
     : null;
 
   if (!player) redirect('/dashboard');
+
+  // Organizers cannot edit players — UNLESS the profile is incomplete (initial setup)
+  const profileComplete = !!player.phone?.trim();
+  if (profileComplete && getViewMode() === 'organizer') redirect(`/players/${player.id}`);
 
   return (
     <PlayerEditForm
