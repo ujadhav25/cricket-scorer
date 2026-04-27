@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
 import { getInitials, cn } from '@/lib/utils';
-import { Check, Trash2, Shield, Search } from 'lucide-react';
+import { Check, Trash2, Shield, Search, Pipette } from 'lucide-react';
 
 const schema = z.object({
   name: z.string().min(1),
@@ -23,7 +23,10 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
-const PRESET_COLORS = ['#16a34a', '#2563eb', '#dc2626', '#d97706', '#7c3aed', '#db2777', '#0891b2', '#65a30d'];
+const PRESET_COLORS = [
+  '#16a34a', '#2563eb', '#dc2626', '#d97706',
+  '#7c3aed', '#db2777', '#0891b2', '#ea580c',
+];
 
 export default function EditTeamPage() {
   const router = useRouter();
@@ -33,12 +36,30 @@ export default function EditTeamPage() {
   const [deleting, setDeleting] = useState(false);
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+  const [hexInput, setHexInput] = useState(PRESET_COLORS[0].replace('#', '').toUpperCase());
+  const colorInputRef = useRef<HTMLInputElement>(null);
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [captainPlayerId, setCaptainPlayerId] = useState<string>('');
   const [loaded, setLoaded] = useState(false);
   const [search, setSearch] = useState('');
 
-  const { register, handleSubmit, setValue, reset } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, setValue, watch, reset } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  function applyColor(color: string) {
+    setSelectedColor(color);
+    setHexInput(color.replace('#', '').toUpperCase());
+    setValue('color', color);
+  }
+
+  function handleHexInput(raw: string) {
+    const cleaned = raw.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 6);
+    setHexInput(cleaned);
+    if (cleaned.length === 6) {
+      const color = '#' + cleaned;
+      setSelectedColor(color);
+      setValue('color', color);
+    }
+  }
 
   useEffect(() => {
     Promise.all([fetch(`/api/teams/${id}`).then((r) => r.json()), fetch('/api/players').then((r) => r.json())]).then(
@@ -58,6 +79,7 @@ export default function EditTeamPage() {
         });
         setCaptainPlayerId(captainPid);
         setSelectedColor(team.color);
+        setHexInput(team.color.replace('#', '').toUpperCase());
         setSelectedPlayerIds(pids);
         setAllPlayers(players);
         setLoaded(true);
@@ -132,13 +154,84 @@ export default function EditTeamPage() {
               <Input {...register('homeGround')} className="mt-1" />
             </div>
             <div>
-              <Label className="mb-2 block">Color</Label>
-              <div className="flex gap-2 flex-wrap">
-                {PRESET_COLORS.map((c) => (
-                  <button key={c} type="button" onClick={() => { setSelectedColor(c); setValue('color', c); }}
-                    className={cn('h-9 w-9 rounded-full', selectedColor === c && 'ring-2 ring-white ring-offset-2 ring-offset-background')}
-                    style={{ backgroundColor: c }} />
-                ))}
+              <Label className="mb-3 block">Color</Label>
+              <div className="flex items-start gap-4">
+                {/* Live team badge preview */}
+                <div
+                  className="h-14 w-14 rounded-2xl flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-md transition-colors duration-200"
+                  style={{ backgroundColor: selectedColor }}
+                >
+                  {(watch('name') || 'T')[0]?.toUpperCase()}
+                </div>
+
+                <div className="flex-1 space-y-3">
+                  {/* Preset swatches — single row */}
+                  <div className="flex items-center gap-2">
+                    {PRESET_COLORS.map((color) => {
+                      const isSelected = selectedColor === color;
+                      return (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => applyColor(color)}
+                          className="relative shrink-0 focus:outline-none"
+                          style={{
+                            display: 'block',
+                            padding: 0,
+                            boxSizing: 'border-box',
+                            minHeight: 0,
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            backgroundColor: color,
+                            transform: isSelected ? 'scale(1.15)' : undefined,
+                            boxShadow: isSelected ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+                            transition: 'transform 0.15s, box-shadow 0.15s',
+                          }}
+                          title={color}
+                        >
+                          {isSelected && (
+                            <Check
+                              className="absolute inset-0 m-auto h-3.5 w-3.5 text-white"
+                              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Hex input + custom picker */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-1 border border-border rounded-md px-2 py-1.5 bg-muted/30 focus-within:ring-1 focus-within:ring-ring">
+                      <div className="h-4 w-4 rounded shrink-0" style={{ backgroundColor: selectedColor }} />
+                      <span className="text-xs text-muted-foreground font-mono">#</span>
+                      <input
+                        type="text"
+                        value={hexInput}
+                        onChange={(e) => handleHexInput(e.target.value)}
+                        maxLength={6}
+                        className="w-16 text-xs font-mono bg-transparent focus:outline-none uppercase tracking-wide"
+                        placeholder="16A34A"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => colorInputRef.current?.click()}
+                      className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors shrink-0"
+                    >
+                      <Pipette className="h-3 w-3" />
+                      Custom
+                    </button>
+                    <input
+                      ref={colorInputRef}
+                      type="color"
+                      value={selectedColor}
+                      onChange={(e) => applyColor(e.target.value)}
+                      className="sr-only"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
