@@ -62,7 +62,7 @@ export default function JoinTeamPage() {
     fetch('/api/profile')
       .then((r) => r.ok ? r.json() : null)
       .then((p) => {
-        const name = p?.name?.trim() || session.user.name?.trim() || '';
+        const name = p?.name?.trim() || session?.user?.name?.trim() || '';
         if (name) {
           // Auto-join: use existing player's batting/bowling if available, otherwise defaults
           doJoin({
