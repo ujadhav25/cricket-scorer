@@ -415,16 +415,34 @@ async function PlayerDashboard({
         )}
       </div>
 
+      {/* Teams shown in My Teams section above */}
+
       {/* Teams */}
-      {player.teamPlayers.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {player.teamPlayers.map(({ team }) => (
-            <Link key={team.id} href={`/teams/${team.id}`}>
-              <span className="flex items-center gap-1.5 rounded-full border border-border/30 bg-white/[0.04] px-3 py-1.5 text-xs font-medium hover:border-cricket-green-500/40 transition-colors">
-                <Shield className="h-3 w-3 text-cricket-green" /> {team.name}
-              </span>
-            </Link>
-          ))}
+      {player.teamPlayers.length > 0 ? (
+        <div>
+          <h2 className="mb-3 text-lg font-bold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-cricket-green" /> My Teams
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {player.teamPlayers.map(({ team }) => (
+              <Link key={team.id} href={`/teams/${team.id}`}>
+                <span className="flex items-center gap-1.5 rounded-full border border-border/30 bg-white/[0.04] px-3 py-1.5 text-xs font-medium hover:border-cricket-green-500/40 transition-colors">
+                  <Shield className="h-3 w-3 text-cricket-green" /> {team.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h2 className="mb-3 text-lg font-bold flex items-center gap-2">
+            <Shield className="h-5 w-5 text-cricket-green" /> My Teams
+          </h2>
+          <Card className="border-dashed">
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              You haven't joined any teams yet. Ask your organizer to share an invite link.
+            </CardContent>
+          </Card>
         </div>
       )}
 

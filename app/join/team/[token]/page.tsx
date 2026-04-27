@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Users, CheckCircle2, LogIn, ArrowLeft } from 'lucide-react';
+import { Users, LogIn, ArrowLeft, PartyPopper, ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -27,10 +28,12 @@ export default function JoinTeamPage() {
   const { data: session, status: sessionStatus } = useSession();
 
   const [team, setTeam] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [saving, setSaving] = useState(false);
   const [joined, setJoined] = useState(false);
+  const [alreadyMember, setAlreadyMember] = useState(false);
   const [joinedName, setJoinedName] = useState('');
   const [serverError, setServerError] = useState('');
   const [battingStyle, setBattingStyle] = useState<'Right' | 'Left'>('Right');
@@ -52,24 +55,37 @@ export default function JoinTeamPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  // Auto-fill form from logged-in user's profile
+  // Fetch profile + auto-join if complete
   useEffect(() => {
     if (!session?.user) return;
     fetch('/api/profile')
       .then((r) => r.ok ? r.json() : null)
-      .then((profile) => {
-        if (!profile) return;
+      .then((p) => {
+        if (!p) return;
+        setProfile(p);
+        const hasName = !!p.name?.trim();
+        const hasPhone = !!p.phone?.trim();
+        const hasBatting = !!p.battingStyle;
+        const hasBowling = !!p.bowlingStyle;
+        // Pre-fill form
         reset({
-          name: profile.name ?? '',
-          phone: profile.phone ?? '',
-          battingStyle: 'Right',
-          bowlingStyle: 'Medium',
+          name: p.name ?? '',
+          phone: p.phone ?? '',
+          battingStyle: p.battingStyle ?? 'Right',
+          bowlingStyle: p.bowlingStyle ?? 'Medium',
         });
+        if (p.battingStyle) setBattingStyle(p.battingStyle);
+        if (p.bowlingStyle) setBowlingStyle(p.bowlingStyle);
+        // Auto-join if profile is complete
+        if (hasName && hasPhone && hasBatting && hasBowling && team) {
+          doJoin({ name: p.name, phone: p.phone, battingStyle: p.battingStyle, bowlingStyle: p.bowlingStyle });
+        }
       })
       .catch(() => {});
-  }, [session, reset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, team]);
 
-  async function onSubmit(data: FormData) {
+  async function doJoin(data: FormData) {
     setSaving(true);
     setServerError('');
     try {
@@ -79,6 +95,10 @@ export default function JoinTeamPage() {
         body: JSON.stringify(data),
       });
       const result = await res.json();
+      if (res.status === 409 && result.code === 'ALREADY_MEMBER') {
+        setAlreadyMember(true);
+        return;
+      }
       if (!res.ok) {
         setServerError(result.error ?? 'Failed to join team');
         return;
@@ -92,10 +112,13 @@ export default function JoinTeamPage() {
     }
   }
 
-  if (loading || sessionStatus === 'loading') {
+  if (loading || sessionStatus === 'loading' || (session?.user && !team && !notFound)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading…</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-cricket-green border-t-transparent animate-spin" />
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        </div>
       </div>
     );
   }
@@ -112,7 +135,7 @@ export default function JoinTeamPage() {
     );
   }
 
-  // Not logged in — show login prompt
+  // Not logged in
   if (!session?.user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -120,12 +143,8 @@ export default function JoinTeamPage() {
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <div className="w-full max-w-sm space-y-6">
-          {/* Team header */}
           <div className="flex items-center gap-4">
-            <div
-              className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white shrink-0"
-              style={{ backgroundColor: team?.color ?? '#16a34a' }}
-            >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white shrink-0" style={{ backgroundColor: team?.color ?? '#16a34a' }}>
               {team?.name?.slice(0, 2).toUpperCase()}
             </div>
             <div>
@@ -136,20 +155,14 @@ export default function JoinTeamPage() {
               </p>
             </div>
           </div>
-
           <Card>
             <CardContent className="pt-6 space-y-4 text-center">
               <LogIn className="h-10 w-10 mx-auto text-cricket-green" />
               <div>
                 <p className="font-semibold">Sign in to join this team</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Your profile details will be pre-filled automatically.
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">Your profile details will be pre-filled automatically.</p>
               </div>
-              <Button
-                className="w-full bg-cricket-green hover:bg-cricket-green/90"
-                onClick={() => router.push(`/login?callbackUrl=/join/team/${token}`)}
-              >
+              <Button className="w-full bg-cricket-green hover:bg-cricket-green/90" onClick={() => router.push(`/login?callbackUrl=/join/team/${token}`)}>
                 Sign In
               </Button>
               <Button variant="outline" className="w-full" onClick={() => router.push(`/signup?callbackUrl=/join/team/${token}`)}>
@@ -162,35 +175,119 @@ export default function JoinTeamPage() {
     );
   }
 
-  if (joined) {
+  // Already a member
+  if (alreadyMember) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-background p-4">
-        <CheckCircle2 className="h-16 w-16 text-cricket-green" />
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">You're in!</h1>
-          <p className="text-muted-foreground mt-1">
-            <span className="font-semibold text-foreground">{joinedName}</span> has joined{' '}
-            <span className="font-semibold text-foreground">{team?.name}</span>.
-          </p>
-        </div>
-        <Button className="bg-cricket-green hover:bg-cricket-green/90" onClick={() => router.push('/teams')}>Go to Teams</Button>
-        <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', bounce: 0.4, duration: 0.6 }}
+          className="flex flex-col items-center gap-5 text-center max-w-xs"
+        >
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-cricket-green/15">
+            <ShieldCheck className="h-10 w-10 text-cricket-green" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Already a Member!</h1>
+            <p className="text-muted-foreground mt-1">
+              You're already part of <span className="font-semibold text-foreground">{team?.name}</span>.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 w-full">
+            <Button className="bg-cricket-green hover:bg-cricket-green/90" onClick={() => router.push('/teams')}>View Teams</Button>
+            <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
+  // Joined successfully — animated celebration
+  if (joined) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 overflow-hidden">
+        <AnimatePresence>
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', bounce: 0.5, duration: 0.7 }}
+            className="flex flex-col items-center gap-5 text-center max-w-xs"
+          >
+            {/* Pulsing ring */}
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0, 0.4] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="absolute h-24 w-24 rounded-full bg-cricket-green/30"
+              />
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-cricket-green text-white">
+                <PartyPopper className="h-10 w-10" />
+              </div>
+            </div>
+
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h1 className="text-2xl font-bold">You're in!</h1>
+              <p className="text-muted-foreground mt-1">
+                <span className="font-semibold text-foreground">{joinedName}</span> has joined{' '}
+                <span className="font-semibold text-foreground">{team?.name}</span>.
+              </p>
+            </motion.div>
+
+            {/* Team badge */}
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="flex items-center gap-3 rounded-2xl border border-cricket-green/30 bg-cricket-green/10 px-4 py-3"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white shrink-0" style={{ backgroundColor: team?.color ?? '#16a34a' }}>
+                {team?.name?.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">{team?.name}</p>
+                {team?.homeGround && <p className="text-xs text-muted-foreground">{team.homeGround}</p>}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="flex flex-col gap-2 w-full"
+            >
+              <Button className="bg-cricket-green hover:bg-cricket-green/90" onClick={() => router.push('/teams')}>View Teams</Button>
+              <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // Auto-joining in progress (profile is complete, waiting for API)
+  if (saving) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background p-4">
+        <div className="h-10 w-10 rounded-full border-[3px] border-cricket-green border-t-transparent animate-spin" />
+        <p className="text-muted-foreground text-sm">Joining {team?.name}…</p>
+      </div>
+    );
+  }
+
+  // Manual form (incomplete profile)
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <button onClick={() => router.back()} className="absolute top-4 left-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
       <div className="w-full max-w-sm space-y-6">
-        {/* Team header */}
         <div className="flex items-center gap-4">
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white shrink-0"
-            style={{ backgroundColor: team?.color ?? '#16a34a' }}
-          >
+          <div className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white shrink-0" style={{ backgroundColor: team?.color ?? '#16a34a' }}>
             {team?.name?.slice(0, 2).toUpperCase()}
           </div>
           <div>
@@ -202,7 +299,6 @@ export default function JoinTeamPage() {
           </div>
         </div>
 
-        {/* Logged-in user pill */}
         <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm">
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-cricket-green text-black text-xs font-bold shrink-0">
             {session.user.name?.slice(0, 1).toUpperCase() ?? '?'}
@@ -213,10 +309,10 @@ export default function JoinTeamPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Confirm your details</CardTitle>
+            <CardTitle className="text-base">Complete your profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(doJoin)} className="space-y-4">
               <div>
                 <Label>Your Name *</Label>
                 <Input {...register('name')} className="mt-1" />
@@ -228,10 +324,7 @@ export default function JoinTeamPage() {
               </div>
               <div>
                 <Label>Batting</Label>
-                <Select
-                  value={battingStyle}
-                  onValueChange={(v) => { setBattingStyle(v as 'Right' | 'Left'); setValue('battingStyle', v as 'Right' | 'Left'); }}
-                >
+                <Select value={battingStyle} onValueChange={(v) => { setBattingStyle(v as 'Right' | 'Left'); setValue('battingStyle', v as 'Right' | 'Left'); }}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Right">Right-hand</SelectItem>
@@ -241,10 +334,7 @@ export default function JoinTeamPage() {
               </div>
               <div>
                 <Label>Bowling</Label>
-                <Select
-                  value={bowlingStyle}
-                  onValueChange={(v) => { setBowlingStyle(v as any); setValue('bowlingStyle', v as any); }}
-                >
+                <Select value={bowlingStyle} onValueChange={(v) => { setBowlingStyle(v as any); setValue('bowlingStyle', v as any); }}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Fast">Fast</SelectItem>

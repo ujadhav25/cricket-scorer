@@ -55,33 +55,52 @@ export async function POST(
       },
     });
     if (alreadyMember) {
-      return NextResponse.json({ error: 'You are already a member of this team' }, { status: 409 });
+      return NextResponse.json({ error: 'You are already a member of this team', code: 'ALREADY_MEMBER' }, { status: 409 });
     }
 
-    // Dedup by phone within same team
-    if (phone) {
-      const existing = await prisma.player.findFirst({
-        where: { phone },
-        include: { teamPlayers: { where: { teamId: team.id } } },
-      });
-      if (existing?.teamPlayers.length) {
-        return NextResponse.json(
-          { error: 'A player with this phone number is already in the team' },
-          { status: 409 }
-        );
-      }
-    }
-
-    const player = await prisma.player.create({
-      data: {
-        userId,           // ← joining user owns their own player record
-        name,
-        phone: phone ?? null,
-        battingStyle,
-        bowlingStyle,
-        teamPlayers: { create: { teamId: team.id } },
-      },
+    // Use existing player record if available, otherwise create one
+    let player = await prisma.player.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
     });
+
+    if (player) {
+      // Update existing player with provided details, then add to team
+      player = await prisma.player.update({
+        where: { id: player.id },
+        data: {
+          name,
+          phone: phone ?? player.phone,
+          battingStyle,
+          bowlingStyle,
+          teamPlayers: { create: { teamId: team.id } },
+        },
+      });
+    } else {
+      // Dedup by phone within same team (only for new players)
+      if (phone) {
+        const existing = await prisma.player.findFirst({
+          where: { phone },
+          include: { teamPlayers: { where: { teamId: team.id } } },
+        });
+        if (existing?.teamPlayers.length) {
+          return NextResponse.json(
+            { error: 'A player with this phone number is already in the team', code: 'PHONE_EXISTS' },
+            { status: 409 }
+          );
+        }
+      }
+      player = await prisma.player.create({
+        data: {
+          userId,
+          name,
+          phone: phone ?? null,
+          battingStyle,
+          bowlingStyle,
+          teamPlayers: { create: { teamId: team.id } },
+        },
+      });
+    }
 
     return NextResponse.json({ success: true, player: { id: player.id, name: player.name } });
   } catch (error) {

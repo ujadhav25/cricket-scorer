@@ -51,6 +51,7 @@ function getNavItems(activeView: 'organizer' | 'player', playerId?: string | nul
       ...(playerId
         ? [{ href: playerIncomplete ? `/players/${playerId}/edit` : `/players/${playerId}`, label: 'My Profile', icon: User }]
         : []),
+      { href: '/teams', label: 'Teams', icon: Shield },
       { href: '/history', label: 'History', icon: History },
       { href: '/settings', label: 'Settings', icon: Settings },
     ];
