@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +10,9 @@ import { Plus, Shield } from 'lucide-react';
 export default async function TeamsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
+
+  const cookieStore = await cookies();
+  const isPlayerView = (cookieStore.get('view-mode')?.value ?? 'player') === 'player';
 
   const teams = await prisma.team.findMany({
     where: {
@@ -32,9 +36,11 @@ export default async function TeamsPage() {
           <h1 className="text-3xl font-black tracking-tight">Teams</h1>
           <p className="text-muted-foreground mt-0.5">{teams.length} team{teams.length !== 1 ? 's' : ''}</p>
         </div>
-        <Button asChild>
-          <Link href="/teams/new"><Plus className="mr-2 h-4 w-4" />New Team</Link>
-        </Button>
+        {!isPlayerView && (
+          <Button asChild>
+            <Link href="/teams/new"><Plus className="mr-2 h-4 w-4" />New Team</Link>
+          </Button>
+        )}
       </div>
 
       {teams.length === 0 ? (
@@ -44,10 +50,16 @@ export default async function TeamsPage() {
               <Shield className="h-10 w-10 text-muted-foreground/40" />
             </div>
             <p className="mb-1 font-bold">No teams yet</p>
-            <p className="text-sm text-muted-foreground mb-4">Create a team to start scoring matches</p>
-            <Button asChild>
-              <Link href="/teams/new">Create Team</Link>
-            </Button>
+            {isPlayerView ? (
+              <p className="text-sm text-muted-foreground">Ask your organizer to share an invite link to join a team.</p>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">Create a team to start scoring matches</p>
+                <Button asChild>
+                  <Link href="/teams/new">Create Team</Link>
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (

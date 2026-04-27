@@ -121,24 +121,62 @@ function ViewSwitchButton({ activeView }: { activeView: 'organizer' | 'player' }
 }
 
 export function MobileHeader({ activeView }: { activeView: 'organizer' | 'player' }) {
+  const [open, setOpen] = useState(false);
+  const next = activeView === 'organizer' ? 'player' : 'organizer';
+
+  function handleConfirm() {
+    setOpen(false);
+    const oneYear = 60 * 60 * 24 * 365;
+    const secure = window.location.protocol === 'https:' ? '; secure' : '';
+    document.cookie = `view-mode=${next}; path=/; max-age=${oneYear}; samesite=lax${secure}`;
+    window.location.href = '/dashboard';
+  }
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 flex h-12 items-center justify-between px-4 glass-strong border-b border-border/20 md:hidden">
-      <Link href="/dashboard" className="flex items-center gap-2">
-        <span className="text-lg">🏏</span>
-        <span className="text-sm font-bold text-gradient">CricScorer</span>
-      </Link>
-      <div className="flex items-center gap-2">
-        <span className={cn(
-          'text-[10px] font-bold rounded-full px-1.5 py-0.5',
-          activeView === 'organizer'
-            ? 'bg-cricket-green-500/20 text-cricket-green'
-            : 'bg-blue-500/20 text-blue-400'
-        )}>
-          {activeView === 'organizer' ? 'ORG' : 'PLR'}
-        </span>
-        <ThemeToggle />
-      </div>
-    </header>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-12 items-center justify-between px-4 glass-strong border-b border-border/20 md:hidden">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <span className="text-lg">🏏</span>
+          <span className="text-sm font-bold text-gradient">CricScorer</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setOpen(true)}
+            className={cn(
+              'text-[10px] font-bold rounded-full px-1.5 py-0.5 transition-opacity hover:opacity-70',
+              activeView === 'organizer'
+                ? 'bg-cricket-green-500/20 text-cricket-green'
+                : 'bg-blue-500/20 text-blue-400'
+            )}
+          >
+            {activeView === 'organizer' ? 'ORG' : 'PLR'}
+          </button>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Switch to {next === 'organizer' ? 'Organizer' : 'Player'} View?</DialogTitle>
+            <DialogDescription>
+              {next === 'player'
+                ? 'You will see your player profile and stats.'
+                : 'You will see your organizer dashboard, matches, teams, and tournaments.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleConfirm}
+              className={next === 'organizer' ? 'bg-cricket-green hover:bg-cricket-green/90' : 'bg-blue-600 hover:bg-blue-700'}
+            >
+              {`Switch to ${next === 'organizer' ? 'Organizer' : 'Player'}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -265,7 +303,8 @@ function ViewSwitchBottomButton({ activeView }: { activeView: 'organizer' | 'pla
 export function BottomNav({ activeView, playerId, playerIncomplete }: NavProps) {
   const pathname = usePathname();
   const navItems = getNavItems(activeView, playerId, playerIncomplete);
-  const items = navItems.slice(0, 4);
+  // Player view: show all 5 items (includes Settings for logout). Organizer: show 4 + switch button.
+  const items = activeView === 'player' ? navItems : navItems.slice(0, 4);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 glass-strong md:hidden">
@@ -308,7 +347,7 @@ export function BottomNav({ activeView, playerId, playerIncomplete }: NavProps) 
             </Link>
           );
         })}
-        {!playerIncomplete && (
+        {activeView === 'organizer' && !playerIncomplete && (
           <ViewSwitchBottomButton activeView={activeView} />
         )}
       </div>

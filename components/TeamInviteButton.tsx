@@ -65,7 +65,8 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           onClick={(e) => e.target === e.currentTarget && setOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-6 space-y-5">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-5 space-y-4">
+            {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg text-white">Invite Players</h2>
               <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
@@ -73,16 +74,20 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
               </button>
             </div>
 
-            <p className="text-sm text-white/60">Share this link to let players join <span className="text-white font-semibold">{teamName}</span></p>
-
-            <div className="flex justify-center">
-              <div className="rounded-xl bg-white p-4">
-                <QRCode value={url} size={180} />
+            {/* QR + info side by side */}
+            <div className="flex items-center gap-4">
+              <div className="rounded-xl bg-white p-2.5 shrink-0">
+                <QRCode value={url || 'https://cricscorer.app'} size={100} />
+              </div>
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <p className="text-sm text-white/60 leading-snug">
+                  Invite players to join <span className="text-white font-semibold">{teamName}</span>
+                </p>
+                <p className="text-xs text-white/30">Scan the QR code or share the link below</p>
               </div>
             </div>
 
-            <p className="text-center text-xs text-white/40">Scan to join this team</p>
-
+            {/* Link row */}
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
               <p className="flex-1 text-xs text-white/60 truncate">{url}</p>
               <button onClick={handleCopy} className="shrink-0 text-white/50 hover:text-white transition-colors">
@@ -90,8 +95,9 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
               </button>
             </div>
 
-            {copied && <p className="text-center text-xs text-green-400">Link copied!</p>}
+            {copied && <p className="text-center text-xs text-green-400 -mt-1">Link copied!</p>}
 
+            {/* Action buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleCopy}
