@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import PlayersFilter from './PlayersFilter';
 
@@ -20,7 +20,9 @@ export default async function PlayersPage({ searchParams }: Props) {
 
   const players = await prisma.player.findMany({
     where: {
-      userId: session.user.id,
+      teamPlayers: {
+        some: { team: { userId: session.user.id } },
+      },
       ...(searchParams.search && {
         OR: [
           { name: { contains: searchParams.search, mode: 'insensitive' } },
@@ -40,9 +42,6 @@ export default async function PlayersPage({ searchParams }: Props) {
           <h1 className="text-3xl font-black tracking-tight">Players</h1>
           <p className="text-muted-foreground mt-0.5">{players.length} player{players.length !== 1 ? 's' : ''}</p>
         </div>
-        <Button asChild>
-          <Link href="/players/new"><Plus className="mr-2 h-4 w-4" />Add Player</Link>
-        </Button>
       </div>
 
       <PlayersFilter />
@@ -53,10 +52,12 @@ export default async function PlayersPage({ searchParams }: Props) {
             <div className="rounded-2xl bg-white/[0.04] p-4 mb-4">
               <Users className="h-10 w-10 text-muted-foreground/40" />
             </div>
-            <p className="mb-1 font-bold">No players found</p>
-            <p className="text-sm text-muted-foreground mb-4">Add players manually or import from contacts</p>
+            <p className="mb-1 font-bold">No players yet</p>
+            <p className="text-sm text-muted-foreground mb-4 text-center max-w-xs">
+              Players appear here once they sign up and join a team via your invite link.
+            </p>
             <Button asChild>
-              <Link href="/players/new">Add Player</Link>
+              <Link href="/teams">Go to Teams to Invite</Link>
             </Button>
           </CardContent>
         </Card>

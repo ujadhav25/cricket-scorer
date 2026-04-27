@@ -14,7 +14,7 @@ const UpdateTeamSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   homeGround: z.string().optional().nullable(),
-  playerIds: z.array(z.string()).min(2).max(15).optional(),
+  playerIds: z.array(z.string()).max(15).optional(),
   captainEmail: z.string().email().optional().nullable(),
   captainPlayerId: z.string().optional().nullable(),
 });

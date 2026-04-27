@@ -13,7 +13,7 @@ const CreateTeamSchema = z.object({
   name: z.string().min(1).max(100),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#16a34a'),
   homeGround: z.string().optional(),
-  playerIds: z.array(z.string()).min(2).max(15),
+  playerIds: z.array(z.string()).max(15).optional().default([]),
   captainPlayerId: z.string().optional(),
 });
 

@@ -12,13 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
 import { getInitials, cn } from '@/lib/utils';
-import { Check, Trash2, Shield } from 'lucide-react';
+import { Check, Trash2, Shield, Search } from 'lucide-react';
 
 const schema = z.object({
   name: z.string().min(1),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   homeGround: z.string().optional(),
-  playerIds: z.array(z.string()).min(2).max(15),
+  playerIds: z.array(z.string()).max(15),
   captainPlayerId: z.string().optional().or(z.literal('')),
 });
 type FormData = z.infer<typeof schema>;
@@ -36,6 +36,7 @@ export default function EditTeamPage() {
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
   const [captainPlayerId, setCaptainPlayerId] = useState<string>('');
   const [loaded, setLoaded] = useState(false);
+  const [search, setSearch] = useState('');
 
   const { register, handleSubmit, setValue, reset } = useForm<FormData>({ resolver: zodResolver(schema) });
 
@@ -144,17 +145,40 @@ export default function EditTeamPage() {
         </Card>
         <Card>
           <CardHeader><CardTitle className="text-base">Players ({selectedPlayerIds.length}/15)</CardTitle></CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search players across your teams…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <div className="space-y-2 max-h-72 overflow-y-auto">
-              {allPlayers.map((p) => (
-                <button key={p.id} type="button" onClick={() => togglePlayer(p.id)}
-                  className={cn('flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
-                    selectedPlayerIds.includes(p.id) ? 'border-cricket-green bg-cricket-green/10' : 'border-border hover:border-muted-foreground')}>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold">{getInitials(p.name)}</div>
-                  <span className="flex-1 text-sm font-medium">{p.name}</span>
-                  {selectedPlayerIds.includes(p.id) && <Check className="h-4 w-4 text-cricket-green" />}
-                </button>
-              ))}
+              {allPlayers
+                .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+                .map((p) => (
+                  <button key={p.id} type="button" onClick={() => togglePlayer(p.id)}
+                    className={cn('flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
+                      selectedPlayerIds.includes(p.id) ? 'border-cricket-green bg-cricket-green/10' : 'border-border hover:border-muted-foreground')}>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold shrink-0">{getInitials(p.name)}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{p.name}</p>
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {(p as any).teamPlayers?.map((tp: any) => (
+                          <span key={tp.team.id} className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">{tp.team.name}</span>
+                        ))}
+                      </div>
+                    </div>
+                    {selectedPlayerIds.includes(p.id) && <Check className="h-4 w-4 text-cricket-green shrink-0" />}
+                  </button>
+                ))}
+              {allPlayers.filter((p) => p.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No players found. Invite players via your team invite link.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

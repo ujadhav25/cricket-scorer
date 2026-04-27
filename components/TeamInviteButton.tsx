@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { UserPlus, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,20 +13,39 @@ interface TeamInviteButtonProps {
 export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [url, setUrl] = useState('');
 
-  const url = typeof window !== 'undefined'
-    ? `${window.location.origin}/join/team/${joinToken}`
-    : `/join/team/${joinToken}`;
+  useEffect(() => {
+    setUrl(`${window.location.origin}/join/team/${joinToken}`);
+  }, [joinToken]);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for browsers that block clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
   async function handleNativeShare() {
-    if (navigator.share) {
+    try {
       await navigator.share({ title: `Join ${teamName}`, text: `You've been invited to join ${teamName}`, url });
+    } catch (err: any) {
+      // AbortError = user cancelled — not an error worth reporting
+      if (err?.name !== 'AbortError') {
+        handleCopy();
+      }
     }
   }
 
@@ -48,7 +67,7 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
         >
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-6 space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-lg">Invite Players</h2>
+              <h2 className="font-bold text-lg text-white">Invite Players</h2>
               <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
@@ -76,7 +95,7 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleCopy}
-                className="h-10 rounded-xl border border-white/15 text-sm font-semibold hover:bg-white/5 transition"
+                className="h-10 rounded-xl border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition"
               >
                 Copy Link
               </button>

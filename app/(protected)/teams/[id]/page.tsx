@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getInitials } from '@/lib/utils';
-import { Edit } from 'lucide-react';
+import { Edit, UserPlus } from 'lucide-react';
 import { TeamInviteButton } from '@/components/TeamInviteButton';
 
 export default async function TeamDetailPage({ params }: { params: { id: string } }) {
@@ -99,6 +99,17 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
       <Card>
         <CardHeader><CardTitle className="text-base">Squad ({team.players.length})</CardTitle></CardHeader>
         <CardContent>
+          {team.players.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center rounded-xl border border-dashed border-border">
+              <div className="rounded-2xl bg-muted p-3 mb-3">
+                <UserPlus className="h-7 w-7 text-muted-foreground/50" />
+              </div>
+              <p className="font-semibold text-sm mb-1">No players yet</p>
+              <p className="text-xs text-muted-foreground max-w-[220px]">
+                Tap <span className="font-medium text-foreground">Invite</span> above to share your team link. Players join once they sign up.
+              </p>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {team.players.map(({ player }) => (
               <Link key={player.id} href={`/players/${player.id}`} className="flex items-center gap-2 rounded-lg border border-border p-2 hover:border-cricket-green/40 transition-colors">
@@ -112,6 +123,7 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
               </Link>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
     </div>

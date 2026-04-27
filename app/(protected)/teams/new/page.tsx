@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,18 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
-import { getInitials } from '@/lib/utils';
-import { Plus, Check, Shield } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(1, 'Team name is required'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   homeGround: z.string().optional(),
-  playerIds: z.array(z.string()).min(2, 'Select at least 2 players').max(15, 'Max 15 players'),
-  captainPlayerId: z.string().optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -30,31 +26,12 @@ export default function NewTeamPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [players, setPlayers] = useState<any[]>([]);
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
-  const [captainPlayerId, setCaptainPlayerId] = useState<string>('');
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { color: PRESET_COLORS[0], playerIds: [] },
+    defaultValues: { color: PRESET_COLORS[0] },
   });
-
-  useEffect(() => {
-    fetch('/api/players').then((r) => r.json()).then(setPlayers);
-  }, []);
-
-  function togglePlayer(id: string) {
-    setSelectedPlayerIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id];
-      setValue('playerIds', next);
-      if (!next.includes(captainPlayerId)) {
-        setCaptainPlayerId('');
-        setValue('captainPlayerId', '');
-      }
-      return next;
-    });
-  }
 
   async function onSubmit(data: FormData) {
     setSaving(true);
@@ -65,8 +42,9 @@ export default function NewTeamPage() {
         body: JSON.stringify({ ...data, color: selectedColor }),
       });
       if (!res.ok) throw new Error('Failed to create team');
-      toast({ title: 'Team created!', variant: 'success' });
-      router.push('/teams');
+      const team = await res.json();
+      toast({ title: 'Team created!', description: 'Share the invite link so players can join.', variant: 'success' });
+      router.push(`/teams/${team.id}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -103,73 +81,20 @@ export default function NewTeamPage() {
                     style={{ backgroundColor: color }}
                   />
                 ))}
-                <input type="color" value={selectedColor} onChange={(e) => { setSelectedColor(e.target.value); setValue('color', e.target.value); }} className="h-9 w-9 cursor-pointer rounded-full border-0" />
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => { setSelectedColor(e.target.value); setValue('color', e.target.value); }}
+                  className="h-9 w-9 cursor-pointer rounded-full border-0"
+                />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Select Players ({selectedPlayerIds.length}/15)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {errors.playerIds && <p className="mb-2 text-xs text-destructive">{errors.playerIds.message}</p>}
-            {players.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No players yet.{' '}
-                <a href="/players/new" className="text-cricket-green hover:underline">Add players first</a>
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {players.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => togglePlayer(p.id)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-lg border p-3 transition-colors text-left',
-                      selectedPlayerIds.includes(p.id)
-                        ? 'border-cricket-green bg-cricket-green/10'
-                        : 'border-border hover:border-muted-foreground'
-                    )}
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-bold">
-                      {getInitials(p.name)}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.battingStyle} bat · {p.bowlingStyle} bowl</p>
-                    </div>
-                    {selectedPlayerIds.includes(p.id) && <Check className="h-4 w-4 text-cricket-green" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {selectedPlayerIds.length >= 2 && (
-          <Card>
-            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="h-4 w-4" /> Captain</CardTitle></CardHeader>
-            <CardContent>
-              <Select value={captainPlayerId} onValueChange={(v) => { const val = v === 'none' ? '' : v; setCaptainPlayerId(val); setValue('captainPlayerId', val); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select captain (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No captain</SelectItem>
-                  {players.filter((p) => selectedPlayerIds.includes(p.id)).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="mt-1.5 text-xs text-muted-foreground">The captain can manage the player roster</p>
-            </CardContent>
-          </Card>
-        )}
+        <p className="text-sm text-muted-foreground">
+          After creating the team, share the invite link with your players so they can sign up and join.
+        </p>
 
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="flex-1" onClick={() => router.back()}>Cancel</Button>
