@@ -14,7 +14,7 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  // Resolve user's own player so we can redirect stale URLs
+  // Resolve user's own player so we know if edit is allowed
   const selfPlayer = await prisma.player.findFirst({
     where: { userId: session.user.id },
     select: { id: true },
@@ -24,7 +24,15 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
   const player = await prisma.player.findFirst({
     where: {
       id: params.id,
-      userId: session.user.id,
+      // Allow viewing any player who is in a team accessible to this user
+      OR: [
+        { userId: session.user.id },
+        { teamPlayers: { some: { team: { OR: [
+          { userId: session.user.id },
+          { captainUserId: session.user.id },
+          { players: { some: { player: { userId: session.user.id } } } },
+        ] } } } },
+      ],
     },
     include: {
       batterScores: {
@@ -39,10 +47,7 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
   });
 
   if (!player) {
-    // Stale URL — redirect to user's actual self player or dashboard
-    if (selfPlayer && selfPlayer.id !== params.id) {
-      redirect(`/players/${selfPlayer.id}`);
-    }
+    // Player not found or not accessible — go to dashboard
     redirect('/dashboard');
   }
 
@@ -106,7 +111,7 @@ export default async function PlayerProfilePage({ params }: { params: { id: stri
             </p>
           </div>
         </div>
-        {!isOrganizerView && (
+        {player.userId === session.user.id && (
           <Button asChild variant="outline" size="sm">
             <Link href={`/players/${player.id}/edit`}><Edit className="mr-2 h-4 w-4" />Edit</Link>
           </Button>

@@ -41,12 +41,15 @@ export function PlayerEditForm({ id, defaultValues, email }: Props) {
     try {
       const result = await updatePlayerProfile(id, data);
       if (result.error) throw new Error(result.error);
-      toast({ title: 'Profile saved!', variant: 'success' });
+      toast({ title: 'Profile saved!', description: 'Your profile has been updated.', variant: 'success' });
       // Ensure player view is active after completing profile (overrides any stale organizer cookie)
       const oneYear = 60 * 60 * 24 * 365;
       const secure = window.location.protocol === 'https:' ? '; secure' : '';
       document.cookie = `view-mode=player; path=/; max-age=${oneYear}; samesite=lax${secure}`;
-      window.location.href = `/players/${result.playerId ?? id}`;
+      // Delay navigation so the toast has time to appear
+      setTimeout(() => {
+        window.location.href = `/players/${result.playerId ?? id}`;
+      }, 1500);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
       setSaving(false);
