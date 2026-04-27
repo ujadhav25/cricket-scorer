@@ -30,6 +30,7 @@ export default function JoinTeamPage() {
   const [team, setTeam] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [profileChecked, setProfileChecked] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [saving, setSaving] = useState(false);
   const [joined, setJoined] = useState(false);
@@ -55,33 +56,30 @@ export default function JoinTeamPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  // Fetch profile + auto-join if complete
+  // Fetch profile + auto-join if signed in
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user || !team) return;
     fetch('/api/profile')
       .then((r) => r.ok ? r.json() : null)
       .then((p) => {
-        if (!p) return;
-        setProfile(p);
-        const hasName = !!p.name?.trim();
-        const hasPhone = !!p.phone?.trim();
-        const hasBatting = !!p.battingStyle;
-        const hasBowling = !!p.bowlingStyle;
-        // Pre-fill form
-        reset({
-          name: p.name ?? '',
-          phone: p.phone ?? '',
-          battingStyle: p.battingStyle ?? 'Right',
-          bowlingStyle: p.bowlingStyle ?? 'Medium',
-        });
-        if (p.battingStyle) setBattingStyle(p.battingStyle);
-        if (p.bowlingStyle) setBowlingStyle(p.bowlingStyle);
-        // Auto-join if profile is complete
-        if (hasName && hasPhone && hasBatting && hasBowling && team) {
-          doJoin({ name: p.name, phone: p.phone, battingStyle: p.battingStyle, bowlingStyle: p.bowlingStyle });
+        const name = p?.name?.trim() || session.user.name?.trim() || '';
+        if (name) {
+          // Auto-join: use existing player's batting/bowling if available, otherwise defaults
+          doJoin({
+            name,
+            phone: p?.phone ?? undefined,
+            battingStyle: p?.battingStyle ?? 'Right',
+            bowlingStyle: p?.bowlingStyle ?? 'Medium',
+          });
+        } else {
+          // Only show form if we truly have no name at all
+          if (p) {
+            reset({ name: '', phone: p.phone ?? '', battingStyle: 'Right', bowlingStyle: 'Medium' });
+          }
+          setProfileChecked(true);
         }
       })
-      .catch(() => {});
+      .catch(() => { setProfileChecked(true); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, team]);
 
@@ -112,7 +110,7 @@ export default function JoinTeamPage() {
     }
   }
 
-  if (loading || sessionStatus === 'loading' || (session?.user && !team && !notFound)) {
+  if (loading || sessionStatus === 'loading' || (session?.user && !team && !notFound) || (session?.user && team && !profileChecked && !saving && !joined && !alreadyMember)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">

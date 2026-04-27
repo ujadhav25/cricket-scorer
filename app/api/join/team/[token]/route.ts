@@ -65,14 +65,12 @@ export async function POST(
     });
 
     if (player) {
-      // Update existing player with provided details, then add to team
+      // Update name/phone but preserve existing batting/bowling styles
       player = await prisma.player.update({
         where: { id: player.id },
         data: {
           name,
           phone: phone ?? player.phone,
-          battingStyle,
-          bowlingStyle,
           teamPlayers: { create: { teamId: team.id } },
         },
       });
