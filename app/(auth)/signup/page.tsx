@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default async function SignupPage() {
   const session = await auth();
@@ -10,6 +11,9 @@ export default async function SignupPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-b from-cricket-green-500/10 to-transparent rounded-full blur-3xl" />
       </div>
