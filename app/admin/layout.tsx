@@ -58,11 +58,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
         <div className="p-2 border-t border-border/15 space-y-1">
           <Link
-            href="/dashboard"
+            href="/settings"
             className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium bg-cricket-green-500/10 text-cricket-green border border-cricket-green-500/20 hover:bg-cricket-green-500/15 transition-colors"
           >
             <LogOut className="h-4 w-4" />
-            Exit Admin Panel
+            Settings
           </Link>
         </div>
       </aside>
@@ -80,10 +80,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             ))}
           </nav>
           <Link
-            href="/dashboard"
+            href="/settings"
             className="ml-auto shrink-0 text-xs font-medium text-cricket-green border border-cricket-green-500/30 rounded-full px-2.5 py-1 hover:bg-cricket-green-500/10 transition-colors"
           >
-            ← Exit
+            Settings
           </Link>
         </header>
         <main className="flex-1 overflow-auto">{children}</main>

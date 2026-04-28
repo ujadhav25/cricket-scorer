@@ -67,23 +67,29 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+const isProd = process.env.NODE_ENV === 'production';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen`}>
-        {/* Google Analytics 4 */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-R2QNLWWCEH"
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-R2QNLWWCEH', { send_page_view: false });
-          `}
-        </Script>
+        {/* Google Analytics 4 — production only */}
+        {isProd && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-R2QNLWWCEH"
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-R2QNLWWCEH', { send_page_view: false });
+              `}
+            </Script>
+          </>
+        )}
         <Analytics />
         <ServiceWorkerRegistration />
         <Providers>

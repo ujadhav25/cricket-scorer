@@ -59,7 +59,6 @@ export default async function DashboardPage() {
     prisma.player.count({ where: { userId } }),
     prisma.team.count({ where: { userId } }),
     prisma.match.count({ where: { userId } }),
-    // Fetch completed matches with innings for analytics
     prisma.match.findMany({
       where: { userId, status: 'COMPLETED' },
       include: {
@@ -73,7 +72,7 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  // Analytics: top scorer and top wicket-taker
+  // Analytics: top scorer and top wicket-taker across organizer's matches
   const runsMap: Record<string, { name: string; runs: number }> = {};
   const wicketsMap: Record<string, { name: string; wickets: number }> = {};
   analyticsData.forEach((m) => {
@@ -94,17 +93,17 @@ export default async function DashboardPage() {
   const completedCount = analyticsData.length;
 
   const QUICK_ACTIONS = [
-    { href: '/matches/new', label: 'New Match', icon: Activity, gradient: 'from-cricket-green-500 to-emerald-600' },
-    { href: '/tournaments/new', label: 'New Tournament', icon: Trophy, gradient: 'from-cricket-amber-500 to-orange-600' },
-    { href: '/players/new', label: 'Add Player', icon: Users, gradient: 'from-blue-500 to-indigo-600' },
-    { href: '/teams/new', label: 'New Team', icon: Shield, gradient: 'from-purple-500 to-violet-600' },
+    { href: '/matches/new',     label: 'New Match',      icon: Activity, gradient: 'from-cricket-green-500 to-emerald-600' },
+    { href: '/tournaments/new', label: 'New Tournament', icon: Trophy,   gradient: 'from-cricket-amber-500 to-orange-600' },
+    { href: '/players/new',     label: 'Add Player',     icon: Users,    gradient: 'from-blue-500 to-indigo-600' },
+    { href: '/teams/new',       label: 'New Team',       icon: Shield,   gradient: 'from-purple-500 to-violet-600' },
   ];
 
   const STATS = [
-    { label: 'Total Matches', value: totalMatchCount, icon: Activity, color: 'text-cricket-green' },
-    { label: 'Tournaments', value: activeTournaments.length, icon: Trophy, color: 'text-cricket-amber' },
-    { label: 'Players', value: playerCount, icon: Users, color: 'text-blue-400' },
-    { label: 'Teams', value: teamCount, icon: Shield, color: 'text-purple-400' },
+    { label: 'Total Matches', value: totalMatchCount,        icon: Activity, color: 'text-cricket-green' },
+    { label: 'Tournaments',   value: activeTournaments.length, icon: Trophy,   color: 'text-cricket-amber' },
+    { label: 'Players',       value: playerCount,            icon: Users,    color: 'text-blue-400' },
+    { label: 'Teams',         value: teamCount,              icon: Shield,   color: 'text-purple-400' },
   ];
 
   return (
@@ -336,7 +335,6 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
 // ─── Player Dashboard ─────────────────────────────────────────────────────────
 
 async function PlayerDashboard({
