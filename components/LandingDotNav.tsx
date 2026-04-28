@@ -18,36 +18,31 @@ export function LandingDotNav() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // pick the entry that is most visible
-        let best: IntersectionObserverEntry | null = null;
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            if (!best || entry.intersectionRatio > best.intersectionRatio) {
-              best = entry;
-            }
-          }
+    // Track which section's top edge is closest to the center of the viewport
+    const handleScroll = () => {
+      const mid = window.innerHeight / 2;
+      let closest = SECTIONS[0].id;
+      let minDist = Infinity;
+
+      for (const { id } of SECTIONS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        // distance from top of section to vertical midpoint of viewport
+        const dist = Math.abs(rect.top + rect.height / 2 - mid);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = id;
         }
-        if (best) setActive(best.target.id);
-      },
-      { threshold: [0.3, 0.5], rootMargin: '0px 0px -20% 0px' }
-    );
-
-    SECTIONS.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    // show nav after a small scroll
-    const onScroll = () => setVisible(window.scrollY > 80);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', onScroll);
+      }
+      setActive(closest);
+      setVisible(window.scrollY > 80);
     };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // run once on mount
+
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const scrollTo = (id: string) => {

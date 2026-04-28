@@ -9,6 +9,7 @@ import {
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { LandingDotNav } from '@/components/LandingDotNav';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ScrollReveal } from '@/components/ScrollReveal';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -28,7 +29,7 @@ export default async function HomePage() {
   if (session) redirect('/dashboard');
 
   return (
-    <main className="relative overflow-hidden bg-background text-foreground">
+    <main className="relative overflow-x-hidden bg-background text-foreground">
       <LandingDotNav />
       {/* Theme toggle */}
       <div className="fixed top-4 right-4 z-50">
@@ -102,7 +103,8 @@ export default async function HomePage() {
       </section>
 
       {/* ── LIVE SCORING ── */}
-      <section id="scoring" className="relative px-4 py-24">
+      <section id="scoring" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+        <ScrollReveal className="w-full">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Text */}
@@ -193,11 +195,13 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* ── TOURNAMENT FORMATS ── */}
-      <section id="tournaments" className="relative px-4 py-24">
+      <section id="tournaments" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cricket-amber-500/[0.04] to-transparent" />
+        <ScrollReveal className="w-full">
         <div className="relative mx-auto max-w-6xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cricket-amber-500/20 bg-cricket-amber-500/10 px-3 py-1 text-xs font-medium text-cricket-amber">
             <Trophy className="h-3.5 w-3.5" />
@@ -232,10 +236,12 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* ── ANALYTICS ── */}
-      <section id="analytics" className="relative px-4 py-24">
+      <section id="analytics" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+        <ScrollReveal className="w-full">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Mock analytics card */}
@@ -311,11 +317,13 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* ── SHARE & SPECTATE ── */}
-      <section id="share" className="relative px-4 py-24">
+      <section id="share" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/[0.04] to-transparent" />
+        <ScrollReveal className="w-full">
         <div className="relative mx-auto max-w-6xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
             <Share2 className="h-3.5 w-3.5" />
@@ -371,10 +379,12 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* ── TEAMS & PLAYERS ── */}
-      <section id="teams" className="relative px-4 py-24">
+      <section id="teams" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+        <ScrollReveal className="w-full">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Text */}
@@ -437,44 +447,221 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
-      {/* ── PWA BANNER ── */}
-      <section id="pwa" className="relative px-4 py-16">
-        <div className="mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-3xl border border-cricket-green-500/20 bg-gradient-to-br from-cricket-green-500/15 via-cricket-green-500/8 to-transparent p-8 sm:p-12">
-            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cricket-green-500/10 blur-3xl" />
-            <div className="relative grid grid-cols-1 items-center gap-6 sm:grid-cols-2">
-              <div>
-                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-cricket-green-400">
-                  <Smartphone className="h-4 w-4" />
-                  Progressive Web App
+      {/* ── PWA ── */}
+      <section id="pwa" className="relative flex min-h-screen flex-col justify-center px-4 py-16">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cricket-green-500/[0.04] to-transparent" />
+        <ScrollReveal className="w-full">
+        <div className="relative mx-auto max-w-6xl">
+
+          {/* Header */}
+          <div className="mb-10 text-center">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cricket-green-500/20 bg-cricket-green-500/10 px-3 py-1 text-xs font-medium text-cricket-green-400">
+              <Smartphone className="h-3.5 w-3.5" />
+              Progressive Web App
+            </div>
+            <h2 className="mb-3 text-3xl font-black tracking-tight sm:text-4xl">
+              Take CricScorer <span className="text-gradient">everywhere</span>
+            </h2>
+            <p className="mx-auto max-w-lg text-sm text-muted-foreground">
+              Install from your browser — no app store required. Works offline, feels native.
+            </p>
+          </div>
+
+          {/* 3-col grid */}
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1fr_auto_1fr]">
+
+            {/* Left — install steps */}
+            <div className="space-y-4">
+              {/* Android */}
+              <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
+                <div className="mb-3 flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-green-500/15 text-base">🤖</div>
+                  <div>
+                    <div className="text-sm font-bold">Android</div>
+                    <div className="text-[11px] text-muted-foreground">Chrome · Edge · Samsung</div>
+                  </div>
                 </div>
-                <h2 className="mb-3 text-2xl font-black sm:text-3xl">Works like a native app</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Install CricScorer on Android or iOS for a full-screen experience with offline support. No app store required.
-                </p>
+                <ol className="space-y-2">
+                  {[
+                    'Open CricScorer in Chrome',
+                    'Tap ⋮ menu → "Add to Home Screen"',
+                    'Tap "Install" — done!',
+                  ].map((text, i) => (
+                    <li key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cricket-green-500/15 text-[10px] font-bold text-cricket-green">{i + 1}</span>
+                      {text}
+                    </li>
+                  ))}
+                </ol>
               </div>
-              <div className="flex flex-wrap gap-3 sm:justify-end">
+
+              {/* iOS */}
+              <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
+                <div className="mb-3 flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-500/15 text-base">🍎</div>
+                  <div>
+                    <div className="text-sm font-bold">iPhone / iPad</div>
+                    <div className="text-[11px] text-muted-foreground">Safari required</div>
+                  </div>
+                </div>
+                <ol className="space-y-2">
+                  {[
+                    'Open CricScorer in Safari',
+                    'Tap Share ⎙ → "Add to Home Screen"',
+                    'Tap "Add" — done!',
+                  ].map((text, i) => (
+                    <li key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cricket-green-500/15 text-[10px] font-bold text-cricket-green">{i + 1}</span>
+                      {text}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {/* Feature chips */}
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  { icon: Download, label: 'Install on Android' },
-                  { icon: Smartphone, label: 'Add to Home Screen (iOS)' },
-                  { icon: Zap, label: 'Offline support' },
-                  { icon: Bell, label: 'Background push alerts' },
+                  { icon: Zap, label: 'Works offline' },
+                  { icon: Bell, label: 'Push alerts' },
+                  { icon: Download, label: 'No app store' },
+                  { icon: Shield, label: 'Auto-updates' },
                 ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-2 rounded-xl border border-cricket-green-500/20 bg-cricket-green-500/10 px-3 py-2 text-xs text-cricket-green-300">
-                    <Icon className="h-3.5 w-3.5" />
-                    {label}
+                  <div key={label} className="flex items-center gap-2 rounded-xl border border-cricket-green-500/15 bg-cricket-green-500/8 px-3 py-2">
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-cricket-green" />
+                    <span className="text-xs font-medium">{label}</span>
                   </div>
                 ))}
               </div>
             </div>
+
+            {/* Center — iPhone mockup */}
+            <div className="flex justify-center">
+              <div className="relative">
+                {/* Glow */}
+                <div className="pointer-events-none absolute inset-4 rounded-[3rem] bg-cricket-green-500/25 blur-2xl" />
+                {/* iPhone shell */}
+                <div className="relative w-[200px] overflow-hidden rounded-[3rem] border-[5px] border-border/70 bg-[hsl(225,25%,7%)] shadow-2xl">
+                  {/* Side buttons */}
+                  <div className="absolute -left-[7px] top-20 h-8 w-[5px] rounded-l-full bg-border/60" />
+                  <div className="absolute -left-[7px] top-32 h-8 w-[5px] rounded-l-full bg-border/60" />
+                  <div className="absolute -right-[7px] top-24 h-12 w-[5px] rounded-r-full bg-border/60" />
+
+                  {/* Status bar + Dynamic Island */}
+                  <div className="relative flex items-center justify-between bg-black/40 px-4 pb-1 pt-2 text-[9px] text-white/60">
+                    <span className="font-medium">9:41</span>
+                    {/* Dynamic Island */}
+                    <div className="absolute left-1/2 top-1 -translate-x-1/2 h-[14px] w-[68px] rounded-full bg-black" />
+                    <div className="flex items-center gap-1 text-white/70">
+                      <svg viewBox="0 0 24 24" className="h-2.5 w-2.5 fill-current"><path d="M1.5 8.5a13 13 0 0 1 21 0M5 12a9 9 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0M12 19h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/></svg>
+                      <svg viewBox="0 0 24 24" className="h-2.5 w-3 fill-current"><rect x="2" y="7" width="16" height="10" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/><path d="M20 11v2a1 1 0 0 0 0-2z" fill="currentColor"/></svg>
+                    </div>
+                  </div>
+
+                  {/* Screen content */}
+                  <div className="bg-gradient-to-b from-[hsl(225,25%,9%)] to-[hsl(225,25%,6%)] px-3 pb-3 pt-2">
+                    {/* App grid */}
+                    <div className="mb-2 grid grid-cols-4 gap-2">
+                      {[
+                        { e: '📸', n: 'Camera' }, { e: '🎵', n: 'Music' },
+                        { e: '🗺️', n: 'Maps' }, { e: '📧', n: 'Mail' },
+                        { e: '📅', n: 'Cal' }, { e: '⚙️', n: 'Settings' },
+                        { e: '🌤️', n: 'Weather' },
+                      ].map(({ e, n }) => (
+                        <div key={n} className="flex flex-col items-center gap-0.5">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/10 text-base">{e}</div>
+                          <span className="text-[7px] text-white/40 truncate w-full text-center">{n}</span>
+                        </div>
+                      ))}
+                      {/* CricScorer — highlighted */}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className="relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-cricket-green-500 to-cricket-green-700 text-base shadow-lg shadow-cricket-green-500/50">
+                          🏏
+                          <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-black bg-red-500 text-[7px] font-bold text-white">2</span>
+                        </div>
+                        <span className="text-[7px] font-medium text-white/80">CricScorer</span>
+                      </div>
+                    </div>
+
+                    {/* Lock screen notification */}
+                    <div className="mb-2 rounded-xl bg-white/[0.08] p-2 backdrop-blur-sm">
+                      <div className="mb-1 flex items-center gap-1.5">
+                        <div className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-gradient-to-br from-cricket-green-500 to-cricket-green-700 text-[8px]">🏏</div>
+                        <span className="text-[9px] font-semibold text-white/90">CricScorer</span>
+                        <span className="ml-auto text-[8px] text-white/40">now</span>
+                      </div>
+                      <p className="text-[8px] leading-snug text-white/60">⚡ Warriors vs Strikers is LIVE — tap to watch ball-by-ball</p>
+                    </div>
+
+                    {/* Mini scorecard */}
+                    <div className="rounded-xl border border-cricket-green-500/20 bg-cricket-green-500/10 p-2">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-[9px] font-bold text-cricket-green">LIVE · 142/4</span>
+                        <span className="flex items-center gap-0.5 text-[8px] text-red-400">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-400" />
+                          18.3 ov
+                        </span>
+                      </div>
+                      <div className="flex gap-1">
+                        {[{ b: '1', t: '' }, { b: '4', t: 'b' }, { b: 'W', t: 'w' }, { b: '0', t: '' }, { b: '6', t: 's' }, { b: '·', t: 'd' }].map(({ b, t }, i) => (
+                          <div key={i} className={`flex h-5 w-5 items-center justify-center rounded-full border text-[8px] font-bold
+                            ${t === 'w' ? 'border-red-500/50 bg-red-500/20 text-red-400' :
+                              t === 'b' || t === 's' ? 'border-cricket-green-500/50 bg-cricket-green-500/20 text-cricket-green' :
+                              t === 'd' ? 'border-white/10 bg-white/5 text-white/20' :
+                              'border-white/20 bg-white/5 text-white/70'}`}>{b}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Home indicator */}
+                  <div className="flex justify-center bg-black/20 py-1.5">
+                    <div className="h-1 w-14 rounded-full bg-white/20" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right — why PWA */}
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
+                <div className="mb-3 text-sm font-bold text-foreground/90">Why install as an app?</div>
+                <ul className="space-y-3">
+                  {[
+                    { icon: Zap, title: 'Instant load', desc: 'Opens in under a second, no browser chrome', color: 'text-cricket-amber' },
+                    { icon: Bell, title: 'Live push alerts', desc: 'Get notified for wickets, match start & result', color: 'text-blue-400' },
+                    { icon: Smartphone, title: 'Full-screen mode', desc: 'No address bar — feels exactly like a native app', color: 'text-purple-400' },
+                    { icon: Download, title: 'Works offline', desc: 'Score matches even with no internet connection', color: 'text-cricket-green' },
+                  ].map(({ icon: Icon, title, desc, color }) => (
+                    <li key={title} className="flex items-start gap-3">
+                      <div className={`mt-0.5 shrink-0 ${color}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold">{title}</div>
+                        <div className="text-[11px] text-muted-foreground">{desc}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-cricket-green-500/20 bg-cricket-green-500/8 p-4 text-center">
+                <div className="mb-1 text-2xl">🚀</div>
+                <div className="text-sm font-bold">Zero MB download</div>
+                <div className="text-xs text-muted-foreground">No app store. No storage bloat. Just tap and play.</div>
+              </div>
+            </div>
+
           </div>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section id="cta" className="relative px-4 py-28 text-center">
+      <section id="cta" className="relative flex min-h-screen flex-col items-center justify-center px-4 py-28 text-center">
+        <ScrollReveal className="w-full">
         <div className="mx-auto max-w-2xl">
           <div className="mb-4 text-5xl">🏏</div>
           <h2 className="mb-4 text-3xl font-black tracking-tight sm:text-5xl">
@@ -490,6 +677,7 @@ export default async function HomePage() {
             By signing in you agree to our terms. We&apos;ll never spam you.
           </p>
         </div>
+        </ScrollReveal>
       </section>
 
       {/* ── FOOTER ── */}
