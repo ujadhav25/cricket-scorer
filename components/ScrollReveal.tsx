@@ -29,7 +29,7 @@ export function ScrollReveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.08 }
+      { threshold: 0.01 }
     );
 
     observer.observe(el);

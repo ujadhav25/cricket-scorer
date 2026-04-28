@@ -65,8 +65,11 @@
   }
 }
 
-/* Smooth scrolling */
-html { scroll-behavior: smooth; }
+/* Smooth scrolling + scroll snap */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
 
 /* Touch targets */
 button, a, [role="button"] { min-height: 44px; }

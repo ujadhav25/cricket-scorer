@@ -43,7 +43,7 @@ export default async function HomePage() {
       </div>
 
       {/* ── HERO ── */}
-      <section id="hero" className="relative flex min-h-screen flex-col items-center justify-center px-4 pb-24 pt-16 text-center">
+      <section id="hero" className="relative flex h-screen min-h-screen flex-col items-center justify-center px-4 pb-24 pt-16 text-center snap-start overflow-hidden">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cricket-green-500/30 bg-cricket-green-500/10 px-4 py-1.5 text-sm text-cricket-green-400">
           <Zap className="h-3.5 w-3.5" />
           <span>Push Notifications · PWA · Live Cast · Embed Widget</span>
@@ -103,7 +103,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── LIVE SCORING ── */}
-      <section id="scoring" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+      <section id="scoring" className="relative flex h-screen min-h-screen flex-col justify-center px-4 py-24 snap-start overflow-hidden">
         <ScrollReveal className="w-full">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
@@ -199,7 +199,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── TOURNAMENT FORMATS ── */}
-      <section id="tournaments" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+      <section id="tournaments" className="relative flex h-screen min-h-screen flex-col justify-center px-4 py-24 snap-start overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cricket-amber-500/[0.04] to-transparent" />
         <ScrollReveal className="w-full">
         <div className="relative mx-auto max-w-6xl text-center">
@@ -240,7 +240,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── ANALYTICS ── */}
-      <section id="analytics" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+      <section id="analytics" className="relative flex h-screen min-h-screen flex-col justify-center px-4 py-24 snap-start overflow-hidden">
         <ScrollReveal className="w-full">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
@@ -321,7 +321,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── SHARE & SPECTATE ── */}
-      <section id="share" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+      <section id="share" className="relative flex h-screen min-h-screen flex-col justify-center px-4 py-24 snap-start overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/[0.04] to-transparent" />
         <ScrollReveal className="w-full">
         <div className="relative mx-auto max-w-6xl text-center">
@@ -383,7 +383,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── TEAMS & PLAYERS ── */}
-      <section id="teams" className="relative flex min-h-screen flex-col justify-center px-4 py-24">
+      <section id="teams" className="relative flex h-screen min-h-screen flex-col justify-center px-4 py-24 snap-start overflow-hidden">
         <ScrollReveal className="w-full">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
@@ -451,7 +451,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── PWA ── */}
-      <section id="pwa" className="relative flex min-h-screen flex-col justify-center px-4 py-16">
+      <section id="pwa" className="relative flex h-screen min-h-screen flex-col justify-center px-4 py-16 snap-start overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cricket-green-500/[0.04] to-transparent" />
         <ScrollReveal className="w-full">
         <div className="relative mx-auto max-w-6xl">
@@ -660,7 +660,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section id="cta" className="relative flex min-h-screen flex-col items-center justify-center px-4 py-28 text-center">
+      <section id="cta" className="relative flex h-screen min-h-screen flex-col items-center justify-center px-4 py-28 text-center snap-start overflow-hidden">
         <ScrollReveal className="w-full">
         <div className="mx-auto max-w-2xl">
           <div className="mb-4 text-5xl">🏏</div>
