@@ -13,15 +13,21 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { name: true, email: true, phone: true, image: true, role: true },
-  });
+  const [dbUser, roleRows] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, email: true, phone: true, image: true },
+    }),
+    // Use raw query so a not-yet-migrated enum (e.g. SUPER_ADMIN) doesn't crash Prisma
+    prisma.$queryRaw<{ role: string }[]>`
+      SELECT role::text FROM "User" WHERE id = ${session.user.id} LIMIT 1
+    `.catch(() => [] as { role: string }[]),
+  ]);
 
   const { user } = session;
   const displayName = dbUser?.name ?? user.name ?? '';
   const phone = dbUser?.phone ?? '';
-  const isSuperAdmin = dbUser?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = roleRows[0]?.role === 'SUPER_ADMIN';
 
   return (
     <div className="p-6 space-y-6">

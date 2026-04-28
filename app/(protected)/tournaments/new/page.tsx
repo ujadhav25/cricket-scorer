@@ -62,8 +62,8 @@ export default function NewTournamentPage() {
       // Auto-generate fixtures
       await fetch(`/api/tournaments/${tournament.id}/fixtures`, { method: 'PUT' });
       toast({ title: 'Tournament created! Fixtures generated.', variant: 'success' });
-      analytics.tournamentCreated();
-      analytics.fixturesGenerated();
+      analytics.tournamentCreated(data.format, selectedTeamIds.length);
+      analytics.fixturesGenerated(tournament.id);
       analytics.formSuccess('create_tournament');
       router.push(`/tournaments/${tournament.id}`);
     } catch (err: any) {

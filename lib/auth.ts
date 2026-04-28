@@ -48,12 +48,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        // Fetch role from DB on first sign-in so it's in the JWT
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id as string },
-          select: { role: true },
-        });
-        token.role = dbUser?.role ?? 'ORGANIZER';
+        // Fetch role from DB on first sign-in so it's in the JWT.
+        // Use raw query to avoid Prisma enum validation crashing if the DB
+        // enum hasn't been migrated yet (e.g. SUPER_ADMIN not added).
+        try {
+          const rows = await prisma.$queryRaw<{ role: string }[]>`
+            SELECT role::text FROM "User" WHERE id = ${user.id as string} LIMIT 1
+          `;
+          token.role = rows[0]?.role ?? 'ORGANIZER';
+        } catch {
+          token.role = 'ORGANIZER';
+        }
       }
       return token;
     },

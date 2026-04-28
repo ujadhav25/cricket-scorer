@@ -33,13 +33,25 @@ export default auth((req: NextRequest & { auth: unknown }) => {
   const { pathname } = req.nextUrl;
   const ip = getIp(req);
 
-  // ── Rate limiting for API routes ──────────────────────────────────────
+  // ── NextAuth internal routes — always pass through, never redirect ──────
+  // These are unauthenticated by design (callback, error, csrf, session, etc.)
+  if (pathname.startsWith('/api/auth/')) {
+    const isAuthAction =
+      pathname.startsWith('/api/auth/signin') ||
+      pathname.startsWith('/api/auth/signout') ||
+      pathname.startsWith('/api/auth/callback');
+    if (isAuthAction) {
+      const r = limiters.auth(ip);
+      if (!r.success) return tooManyRequests(r.retryAfter ?? 60);
+    }
+    return NextResponse.next();
+  }
+
+  // ── Rate limiting for other API routes ───────────────────────────────
   if (pathname.startsWith('/api/')) {
     let result;
 
-    if (pathname.startsWith('/api/auth/')) {
-      result = limiters.auth(ip);
-    } else if (pathname.startsWith('/api/join/')) {
+    if (pathname.startsWith('/api/join/')) {
       result = limiters.join(ip);
     } else if (pathname.startsWith('/api/matches/') && pathname.endsWith('/ball')) {
       // Ball-by-ball scoring endpoint — highest allowed throughput

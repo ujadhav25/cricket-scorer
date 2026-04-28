@@ -87,7 +87,7 @@ export default function NewMatchPage() {
       if (!res.ok) throw new Error('Failed to create match');
       const match = await res.json();
       toast({ title: 'Match created!', variant: 'success' });
-      analytics.matchCreated();
+      analytics.matchCreated(data.overs, !!data.tournamentId && data.tournamentId !== 'none');
       analytics.formSuccess('create_match');
       router.push(`/matches/${match.id}/score`);
     } catch (err: any) {

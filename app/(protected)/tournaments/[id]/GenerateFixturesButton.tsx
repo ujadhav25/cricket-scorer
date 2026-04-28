@@ -33,7 +33,7 @@ export function GenerateFixturesButton({ tournamentId, teamCount, matchCount, fo
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to generate fixtures');
       toast({ title: `Generated ${data.count} fixtures!`, variant: 'success' });
-      analytics.fixturesGenerated();
+      analytics.fixturesGenerated(tournamentId);
       setOpen(false);
       router.refresh();
     } catch (err: any) {
