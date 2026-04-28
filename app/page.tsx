@@ -7,6 +7,8 @@ import {
   Shield, Target,
 } from 'lucide-react';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
+import { LandingDotNav } from '@/components/LandingDotNav';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -27,6 +29,11 @@ export default async function HomePage() {
 
   return (
     <main className="relative overflow-hidden bg-background text-foreground">
+      <LandingDotNav />
+      {/* Theme toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       {/* Ambient background glows */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[700px] w-[700px] rounded-full bg-cricket-green-500/8 blur-3xl" />
@@ -35,7 +42,7 @@ export default async function HomePage() {
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative flex min-h-screen flex-col items-center justify-center px-4 pb-24 pt-16 text-center">
+      <section id="hero" className="relative flex min-h-screen flex-col items-center justify-center px-4 pb-24 pt-16 text-center">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cricket-green-500/30 bg-cricket-green-500/10 px-4 py-1.5 text-sm text-cricket-green-400">
           <Zap className="h-3.5 w-3.5" />
           <span>Push Notifications · PWA · Live Cast · Embed Widget</span>
@@ -73,10 +80,29 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
+
+        {/* Scroll nudge */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5">
+          <span className="text-xs text-muted-foreground/40 tracking-widest uppercase">scroll</span>
+          <div className="flex flex-col items-center gap-0.5">
+            <svg
+              className="h-5 w-5 text-cricket-green/60 animate-bounce"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+            <svg
+              className="h-5 w-5 text-cricket-green/30 animate-bounce [animation-delay:150ms]"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       </section>
 
       {/* ── LIVE SCORING ── */}
-      <section className="relative px-4 py-24">
+      <section id="scoring" className="relative px-4 py-24">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Text */}
@@ -170,7 +196,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── TOURNAMENT FORMATS ── */}
-      <section className="relative px-4 py-24">
+      <section id="tournaments" className="relative px-4 py-24">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-cricket-amber-500/[0.04] to-transparent" />
         <div className="relative mx-auto max-w-6xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cricket-amber-500/20 bg-cricket-amber-500/10 px-3 py-1 text-xs font-medium text-cricket-amber">
@@ -209,7 +235,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── ANALYTICS ── */}
-      <section className="relative px-4 py-24">
+      <section id="analytics" className="relative px-4 py-24">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Mock analytics card */}
@@ -288,7 +314,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── SHARE & SPECTATE ── */}
-      <section className="relative px-4 py-24">
+      <section id="share" className="relative px-4 py-24">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/[0.04] to-transparent" />
         <div className="relative mx-auto max-w-6xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
@@ -348,7 +374,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── TEAMS & PLAYERS ── */}
-      <section className="relative px-4 py-24">
+      <section id="teams" className="relative px-4 py-24">
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Text */}
@@ -414,7 +440,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── PWA BANNER ── */}
-      <section className="relative px-4 py-16">
+      <section id="pwa" className="relative px-4 py-16">
         <div className="mx-auto max-w-4xl">
           <div className="relative overflow-hidden rounded-3xl border border-cricket-green-500/20 bg-gradient-to-br from-cricket-green-500/15 via-cricket-green-500/8 to-transparent p-8 sm:p-12">
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cricket-green-500/10 blur-3xl" />
@@ -448,7 +474,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className="relative px-4 py-28 text-center">
+      <section id="cta" className="relative px-4 py-28 text-center">
         <div className="mx-auto max-w-2xl">
           <div className="mb-4 text-5xl">🏏</div>
           <h2 className="mb-4 text-3xl font-black tracking-tight sm:text-5xl">
@@ -467,8 +493,13 @@ export default async function HomePage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-border/20 px-4 py-8 text-center text-xs text-muted-foreground/40">
+      <footer className="border-t border-border/30 px-4 py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} CricScorer &nbsp;·&nbsp; Free cricket scoring platform
+        {process.env.NEXT_PUBLIC_APP_VERSION && (
+          <span className="ml-3 inline-flex items-center rounded-full border border-border/50 bg-card/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground/70">
+            v{process.env.NEXT_PUBLIC_APP_VERSION}
+          </span>
+        )}
       </footer>
     </main>
   );
