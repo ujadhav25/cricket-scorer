@@ -53,6 +53,14 @@ export default auth((req: NextRequest & { auth: unknown }) => {
     }
   }
 
+  // Admin routes — SUPER_ADMIN only
+  if (pathname.startsWith('/admin')) {
+    const user = (req as any).auth?.user;
+    if (!user || (user as any).role !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/dashboard', req.nextUrl.origin));
+    }
+  }
+
   // Cast pages are public — no auth required
   if (pathname.endsWith('/cast')) {
     return NextResponse.next();
@@ -77,6 +85,8 @@ export default auth((req: NextRequest & { auth: unknown }) => {
 export const config = {
   matcher: [
     '/api/:path+',
+    '/admin',
+    '/admin/:path+',
     '/dashboard',
     '/dashboard/:path+',
     '/players/:path+',

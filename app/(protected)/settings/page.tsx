@@ -1,11 +1,13 @@
 import { auth, signOut } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getInitials } from '@/lib/utils';
 import ProfileEditForm from './ProfileEditForm';
 import { UserAvatar } from './UserAvatar';
 import SignOutButton from './SignOutButton';
+import { ShieldAlert } from 'lucide-react';
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -13,12 +15,13 @@ export default async function SettingsPage() {
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, phone: true, image: true },
+    select: { name: true, email: true, phone: true, image: true, role: true },
   });
 
   const { user } = session;
   const displayName = dbUser?.name ?? user.name ?? '';
   const phone = dbUser?.phone ?? '';
+  const isSuperAdmin = dbUser?.role === 'SUPER_ADMIN';
 
   return (
     <div className="p-6 space-y-6">
@@ -49,6 +52,16 @@ export default async function SettingsPage() {
       <p className="text-xs text-muted-foreground/40 text-center">
         v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
       </p>
+
+      {isSuperAdmin && (
+        <Link
+          href="/admin"
+          className="flex items-center gap-2 max-w-lg rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+        >
+          <ShieldAlert className="h-4 w-4" />
+          Super Admin Panel
+        </Link>
+      )}
     </div>
   );
 }

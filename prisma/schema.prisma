@@ -12,6 +12,7 @@ datasource db {
 enum UserRole {
   ORGANIZER
   PLAYER
+  SUPER_ADMIN
 }
 
 // ─── Auth Models (NextAuth) ────────────────────────────────────────────────
