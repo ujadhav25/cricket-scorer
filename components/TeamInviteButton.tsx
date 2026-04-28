@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { UserPlus, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { analytics } from '@/lib/analytics';
 
 interface TeamInviteButtonProps {
   joinToken: string;
@@ -35,12 +36,14 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
       document.body.removeChild(ta);
     }
     setCopied(true);
+    analytics.linkCopied('team_invite');
     setTimeout(() => setCopied(false), 2000);
   }
 
   async function handleNativeShare() {
     try {
       await navigator.share({ title: `Join ${teamName}`, text: `You've been invited to join ${teamName}`, url });
+      analytics.nativeShareTriggered('team_invite');
     } catch (err: any) {
       // AbortError = user cancelled — not an error worth reporting
       if (err?.name !== 'AbortError') {
@@ -55,7 +58,7 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
         variant="outline"
         size="sm"
         className="gap-1.5 rounded-xl"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); analytics.shareOpened('team_invite'); }}
       >
         <UserPlus className="h-4 w-4" /> Invite
       </Button>
@@ -69,7 +72,7 @@ export function TeamInviteButton({ joinToken, teamName }: TeamInviteButtonProps)
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg text-white">Invite Players</h2>
-              <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
+              <button onClick={() => { setOpen(false); analytics.shareDismissed('team_invite'); }} className="text-white/50 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>

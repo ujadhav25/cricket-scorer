@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
 import { Users } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   teamAId: z.string().min(1, 'Select Team A'),
@@ -71,6 +72,7 @@ export default function NewMatchPage() {
       return;
     }
     setSaving(true);
+    analytics.formSubmit('create_match');
     try {
       const res = await fetch('/api/matches', {
         method: 'POST',
@@ -85,9 +87,12 @@ export default function NewMatchPage() {
       if (!res.ok) throw new Error('Failed to create match');
       const match = await res.json();
       toast({ title: 'Match created!', variant: 'success' });
+      analytics.matchCreated();
+      analytics.formSuccess('create_match');
       router.push(`/matches/${match.id}/score`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      analytics.formError('create_match', err.message);
     } finally {
       setSaving(false);
     }

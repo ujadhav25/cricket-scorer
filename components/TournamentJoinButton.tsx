@@ -4,6 +4,7 @@ import { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Link2, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { analytics } from '@/lib/analytics';
 
 interface TournamentJoinButtonProps {
   joinToken: string;
@@ -21,12 +22,14 @@ export function TournamentJoinButton({ joinToken, tournamentName }: TournamentJo
   async function handleCopy() {
     await navigator.clipboard.writeText(url);
     setCopied(true);
+    analytics.linkCopied('tournament_join');
     setTimeout(() => setCopied(false), 2000);
   }
 
   async function handleNativeShare() {
     if (navigator.share) {
       await navigator.share({ title: tournamentName, text: `Register your team for ${tournamentName}`, url });
+      analytics.nativeShareTriggered('tournament_join');
     }
   }
 
@@ -36,7 +39,7 @@ export function TournamentJoinButton({ joinToken, tournamentName }: TournamentJo
         variant="outline"
         size="sm"
         className="gap-1.5 rounded-xl"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); analytics.shareOpened('tournament_join'); }}
       >
         <Link2 className="h-4 w-4" /> Join Link
       </Button>
@@ -49,7 +52,7 @@ export function TournamentJoinButton({ joinToken, tournamentName }: TournamentJo
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1a0d] p-6 space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg text-white">Tournament Join Link</h2>
-              <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
+              <button onClick={() => { setOpen(false); analytics.shareDismissed('tournament_join'); }} className="text-white/50 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>

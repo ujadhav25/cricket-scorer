@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toaster';
 import { Trash2 } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 export default function DeleteMatchButton({ matchId }: { matchId: string }) {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function DeleteMatchButton({ matchId }: { matchId: string }) {
       const res = await fetch(`/api/matches/${matchId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete match');
       toast({ title: 'Match deleted', variant: 'success' });
+      analytics.matchDeleted();
       router.push('/matches');
       router.refresh();
     } catch (err: any) {

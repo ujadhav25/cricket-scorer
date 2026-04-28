@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/toaster';
 import { Lock } from 'lucide-react';
 import { updatePlayerProfile } from '@/app/actions/updatePlayerProfile';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -38,10 +39,13 @@ export function PlayerEditForm({ id, defaultValues, email }: Props) {
 
   async function onSubmit(data: FormData) {
     setSaving(true);
+    analytics.formSubmit('player_profile');
     try {
       const result = await updatePlayerProfile(id, data);
       if (result.error) throw new Error(result.error);
       toast({ title: 'Profile saved!', description: 'Your profile has been updated.', variant: 'success' });
+      analytics.playerProfileUpdated();
+      analytics.formSuccess('player_profile');
       // Ensure player view is active after completing profile (overrides any stale organizer cookie)
       const oneYear = 60 * 60 * 24 * 365;
       const secure = window.location.protocol === 'https:' ? '; secure' : '';
@@ -52,6 +56,7 @@ export function PlayerEditForm({ id, defaultValues, email }: Props) {
       }, 1500);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      analytics.formError('player_profile', err.message);
       setSaving(false);
     }
   }

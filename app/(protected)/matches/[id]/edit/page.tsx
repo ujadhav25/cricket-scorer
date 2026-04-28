@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toaster';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   overs: z.number({ message: 'Enter number of overs' }).int().min(1).max(50),
@@ -56,6 +57,7 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
 
   async function onSubmit(data: FormData) {
     setSaving(true);
+    analytics.formSubmit('edit_match');
     try {
       const res = await fetch(`/api/matches/${params.id}`, {
         method: 'PATCH',
@@ -67,9 +69,12 @@ export default function EditMatchPage({ params }: { params: { id: string } }) {
       });
       if (!res.ok) throw new Error('Failed to update match');
       toast({ title: 'Match updated!', variant: 'success' });
+      analytics.matchUpdated();
+      analytics.formSuccess('edit_match');
       router.push(`/matches/${params.id}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      analytics.formError('edit_match', err.message);
     } finally {
       setSaving(false);
     }

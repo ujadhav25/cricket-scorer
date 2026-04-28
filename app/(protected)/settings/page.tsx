@@ -2,10 +2,10 @@ import { auth, signOut } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
 import ProfileEditForm from './ProfileEditForm';
 import { UserAvatar } from './UserAvatar';
+import SignOutButton from './SignOutButton';
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -38,12 +38,10 @@ export default async function SettingsPage() {
           <ProfileEditForm initialName={displayName} initialPhone={phone} />
 
           <div className="border-t border-border pt-4">
-            <form action={async () => {
+            <SignOutButton formAction={async () => {
               'use server';
               await signOut({ redirectTo: '/' });
-            }}>
-              <Button type="submit" variant="destructive" className="w-full">Sign Out</Button>
-            </form>
+            }} />
           </div>
         </CardContent>
       </Card>

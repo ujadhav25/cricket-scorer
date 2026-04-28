@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { analytics } from '@/lib/analytics';
 import { useToast } from '@/components/ui/toaster';
 
 interface Props {
@@ -21,6 +22,7 @@ export default function ProfileEditForm({ initialName, initialPhone }: Props) {
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
+    analytics.formSubmit('settings_profile');
     const res = await fetch('/api/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -29,9 +31,12 @@ export default function ProfileEditForm({ initialName, initialPhone }: Props) {
     setSaving(false);
     if (!res.ok) {
       toast({ title: 'Update failed', variant: 'destructive' });
+      analytics.formError('settings_profile', 'API error');
       return;
     }
     toast({ title: 'Profile updated', variant: 'success' });
+    analytics.settingsProfileUpdated();
+    analytics.formSuccess('settings_profile');
     setEditing(false);
   };
 
@@ -46,7 +51,7 @@ export default function ProfileEditForm({ initialName, initialPhone }: Props) {
           <p className="text-xs text-muted-foreground">Phone</p>
           <p className="font-medium">{phone || '—'}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Edit Profile</Button>
+        <Button variant="outline" size="sm" onClick={() => { setEditing(true); analytics.formStart('settings_profile'); }}>Edit Profile</Button>
       </div>
     );
   }

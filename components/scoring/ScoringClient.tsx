@@ -20,6 +20,7 @@ import { ArrowLeft, Undo2, Share2 } from 'lucide-react';
 import { getPusherClient, matchChannel, PUSHER_EVENTS } from '@/lib/pusher';
 import React from 'react';
 import { ShareMatchButton } from '@/components/ShareMatchButton';
+import { analytics } from '@/lib/analytics';
 
 interface ScoringClientProps {
   match: any;
@@ -347,6 +348,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
       // Toast
       const label = event.isWide ? 'Wide' : event.isNoBall ? 'No Ball' : event.isLegBye ? 'Leg Bye' : event.isBye ? 'Bye' : `${event.runs} run${event.runs !== 1 ? 's' : ''}`;
       toast({ title: label, variant: 'default' });
+      analytics.ballRecorded(event.runs, false, !!(event.isWide || event.isNoBall || event.isLegBye || event.isBye));
 
       // Milestone detection — check if batter crossed 50 or 100
       if (!event.isWide && !event.isNoBall && !event.isLegBye && !event.isBye && event.runs > 0) {
@@ -405,6 +407,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
             setOptimisticDeliveries([]);
             const target = dbTotalRuns + 1;
             toast({ title: 'Innings 1 complete!', description: `Target for 2nd innings: ${target}`, variant: 'default' });
+            analytics.inningsEnded();
             router.refresh();
           } else if (activeInningsNumber === 2) {
             // End of innings 2 — use DB innings1 total as primary, state as fallback
@@ -513,6 +516,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
 
       triggerAnim('wicket');
       toast({ title: `Wicket! ${data.wicketType}`, variant: 'destructive' });
+      analytics.ballRecorded(0, true, false);
 
       // 5-wicket haul milestone check for bowler
       const bowlerWickets = (currentInnings?.bowlerScores?.find((bs: any) => bs.playerId === store.currentBowlerId)?.wickets ?? 0) + 1;
@@ -598,6 +602,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
       const res = await fetch(`/api/matches/${match.id}/ball/last`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Nothing to undo');
       toast({ title: 'Last ball undone', variant: 'success' });
+      analytics.undoBall();
       router.refresh();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });

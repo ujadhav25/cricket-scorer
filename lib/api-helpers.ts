@@ -26,6 +26,19 @@ export function serverErrorResponse(error: unknown) {
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 }
 
+export function rateLimitResponse(retryAfter = 60) {
+  return NextResponse.json(
+    { error: 'Too many requests. Please slow down.' },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(retryAfter),
+        'X-RateLimit-Limit': '0',
+      },
+    }
+  );
+}
+
 // Reusable Prisma OR filter: returns teams owned by, captained by, or where user is a player
 export function teamMemberFilter(userId: string) {
   return {

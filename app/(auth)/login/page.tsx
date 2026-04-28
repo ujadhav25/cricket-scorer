@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import Link from 'next/link';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -24,9 +25,12 @@ export default function LoginPage() {
 
   async function onSubmit({ email }: FormData) {
     setLoading(true);
+    analytics.formSubmit('magic_link_login');
     await signIn('email', { email, callbackUrl: '/dashboard', redirect: false });
     setEmailSent(true);
     setLoading(false);
+    analytics.magicLinkSent();
+    analytics.login('email');
   }
 
   return (
@@ -60,7 +64,10 @@ export default function LoginPage() {
                 <Button
                   className="w-full bg-white text-gray-800 hover:bg-gray-50 border border-white/20 shadow-lg rounded-xl h-12 font-semibold transition-all duration-200 hover:scale-[1.01]"
                   size="lg"
-                  onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+                  onClick={() => {
+                    analytics.login('google');
+                    signIn('google', { callbackUrl: '/dashboard' });
+                  }}
                 >
                   <svg className="mr-2.5 h-5 w-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

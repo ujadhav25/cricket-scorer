@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { AlertCircle } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 const ORGANIZER_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -67,6 +68,7 @@ function ViewSwitchButton({ activeView }: { activeView: 'organizer' | 'player' }
 
   function handleConfirm() {
     setOpen(false);
+    analytics.viewSwitchConfirmed(activeView, next);
     // Set cookie directly in browser — no server round-trip, takes effect immediately
     const oneYear = 60 * 60 * 24 * 365;
     const secure = window.location.protocol === 'https:' ? '; secure' : '';
@@ -77,7 +79,7 @@ function ViewSwitchButton({ activeView }: { activeView: 'organizer' | 'player' }
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); analytics.viewSwitchOpened(activeView); }}
         className={cn(
           'w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
           'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
@@ -181,6 +183,7 @@ export function Sidebar({ activeView, playerId, playerIncomplete }: NavProps) {
             <Link
               key={href}
               href={href}
+              onClick={() => analytics.navClick(href)}
               className={cn(
                 'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                 isActive
@@ -220,6 +223,7 @@ function ViewSwitchBottomButton({ activeView }: { activeView: 'organizer' | 'pla
 
   function handleConfirm() {
     setOpen(false);
+    analytics.viewSwitchConfirmed(activeView, next);
     const oneYear = 60 * 60 * 24 * 365;
     const secure = window.location.protocol === 'https:' ? '; secure' : '';
     document.cookie = `view-mode=${next}; path=/; max-age=${oneYear}; samesite=lax${secure}`;
@@ -229,7 +233,7 @@ function ViewSwitchBottomButton({ activeView }: { activeView: 'organizer' | 'pla
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); analytics.viewSwitchOpened(activeView); }}
         className="relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeftRight className="h-5 w-5" />
@@ -291,6 +295,7 @@ export function BottomNav({ activeView, playerId, playerIncomplete }: NavProps) 
             <Link
               key={href}
               href={href}
+              onClick={() => analytics.navClick(href)}
               className={cn(
                 'relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors',
                 isActive

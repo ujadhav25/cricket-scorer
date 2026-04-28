@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { Check, Plus } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   name: z.string().min(1, 'Tournament name required'),
@@ -49,6 +50,7 @@ export default function NewTournamentPage() {
 
   async function onSubmit(data: FormData) {
     setSaving(true);
+    analytics.formSubmit('create_tournament');
     try {
       const res = await fetch('/api/tournaments', {
         method: 'POST',
@@ -60,9 +62,13 @@ export default function NewTournamentPage() {
       // Auto-generate fixtures
       await fetch(`/api/tournaments/${tournament.id}/fixtures`, { method: 'PUT' });
       toast({ title: 'Tournament created! Fixtures generated.', variant: 'success' });
+      analytics.tournamentCreated();
+      analytics.fixturesGenerated();
+      analytics.formSuccess('create_tournament');
       router.push(`/tournaments/${tournament.id}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      analytics.formError('create_tournament', err.message);
     } finally {
       setSaving(false);
     }

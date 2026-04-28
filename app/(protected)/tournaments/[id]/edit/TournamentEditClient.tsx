@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -63,9 +64,12 @@ export default function TournamentEditClient({ tournament }: { tournament: Tourn
     });
     if (!res.ok) {
       toast({ title: 'Update failed', variant: 'destructive' });
+      analytics.formError('edit_tournament', 'Update failed');
       return;
     }
     toast({ title: 'Tournament updated', variant: 'success' });
+    analytics.tournamentUpdated();
+    analytics.formSuccess('edit_tournament');
     router.push(`/tournaments/${tournament.id}`);
     router.refresh();
   };
@@ -80,6 +84,7 @@ export default function TournamentEditClient({ tournament }: { tournament: Tourn
       return;
     }
     toast({ title: 'Tournament deleted', variant: 'success' });
+    analytics.tournamentDeleted();
     router.push('/tournaments');
     router.refresh();
   };

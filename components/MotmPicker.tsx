@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 interface Player {
   id: string;
@@ -25,6 +26,7 @@ export function MotmPicker({ matchId, players, currentMotmId }: MotmPickerProps)
     const newId = selected === playerId ? null : playerId;
     setSelected(newId);
     setOpen(false);
+    if (newId) analytics.motmSelected();
     startTransition(async () => {
       await fetch(`/api/matches/${matchId}/motm`, {
         method: 'PATCH',

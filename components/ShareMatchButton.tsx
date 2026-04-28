@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import { Share2, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { analytics } from '@/lib/analytics';
 
 interface ShareMatchButtonProps {
   shareToken: string;
@@ -22,12 +23,14 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
   async function handleCopy() {
     await navigator.clipboard.writeText(url);
     setCopied(true);
+    analytics.linkCopied('match');
     setTimeout(() => setCopied(false), 2000);
   }
 
   async function handleNativeShare() {
     if (navigator.share) {
       await navigator.share({ title: matchTitle, text: `Watch live score: ${matchTitle}`, url });
+      analytics.nativeShareTriggered('match');
     }
   }
 
@@ -44,7 +47,7 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
         variant="outline"
         size="sm"
         className="gap-1.5 rounded-xl border-cricket-green/40 text-cricket-green hover:bg-cricket-green/10"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); analytics.shareOpened('match'); }}
       >
         <Share2 className="h-4 w-4" /> Share
       </Button>
@@ -58,7 +61,7 @@ export function ShareMatchButton({ shareToken, matchTitle }: ShareMatchButtonPro
             {/* Header */}
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-lg text-white">Share Match</h2>
-              <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
+              <button onClick={() => { setOpen(false); analytics.shareDismissed('match'); }} className="text-white/50 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             </div>

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toaster';
 import { Plus, Check, Pipette } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   name: z.string().min(1, 'Team name is required'),
@@ -44,6 +45,7 @@ export default function NewTeamPage() {
     setSelectedColor(color);
     setHexInput(color.replace('#', '').toUpperCase());
     setValue('color', color);
+    analytics.teamColorPicked(color, PRESET_COLORS.includes(color) ? 'preset' : 'custom');
   }
 
   function handleHexInput(raw: string) {
@@ -58,6 +60,7 @@ export default function NewTeamPage() {
 
   async function onSubmit(data: FormData) {
     setSaving(true);
+    analytics.formSubmit('create_team');
     try {
       const res = await fetch('/api/teams', {
         method: 'POST',
@@ -67,9 +70,12 @@ export default function NewTeamPage() {
       if (!res.ok) throw new Error('Failed to create team');
       const team = await res.json();
       toast({ title: 'Team created!', description: 'Share the invite link so players can join.', variant: 'success' });
+      analytics.teamCreated();
+      analytics.formSuccess('create_team');
       router.push(`/teams/${team.id}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      analytics.formError('create_team', err.message);
     } finally {
       setSaving(false);
     }

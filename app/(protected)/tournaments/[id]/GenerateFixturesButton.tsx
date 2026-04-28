@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Zap } from 'lucide-react';
 import { useToast } from '@/components/ui/toaster';
+import { analytics } from '@/lib/analytics';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -32,6 +33,7 @@ export function GenerateFixturesButton({ tournamentId, teamCount, matchCount, fo
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to generate fixtures');
       toast({ title: `Generated ${data.count} fixtures!`, variant: 'success' });
+      analytics.fixturesGenerated();
       setOpen(false);
       router.refresh();
     } catch (err: any) {

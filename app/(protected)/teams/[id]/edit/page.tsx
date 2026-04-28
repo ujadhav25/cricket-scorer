@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/toaster';
 import { getInitials, cn } from '@/lib/utils';
 import { Check, Trash2, Shield, Search, Pipette } from 'lucide-react';
+import { analytics } from '@/lib/analytics';
 
 const schema = z.object({
   name: z.string().min(1),
@@ -49,6 +50,7 @@ export default function EditTeamPage() {
     setSelectedColor(color);
     setHexInput(color.replace('#', '').toUpperCase());
     setValue('color', color);
+    analytics.teamColorPicked(color, PRESET_COLORS.includes(color) ? 'preset' : 'custom');
   }
 
   function handleHexInput(raw: string) {
@@ -102,6 +104,7 @@ export default function EditTeamPage() {
 
   async function onSubmit(data: FormData) {
     setSaving(true);
+    analytics.formSubmit('edit_team');
     try {
       const res = await fetch(`/api/teams/${id}`, {
         method: 'PUT',
@@ -110,9 +113,12 @@ export default function EditTeamPage() {
       });
       if (!res.ok) throw new Error('Failed to update');
       toast({ title: 'Team updated!', variant: 'success' });
+      analytics.teamUpdated();
+      analytics.formSuccess('edit_team');
       router.push(`/teams/${id}`);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      analytics.formError('edit_team', err.message);
     } finally {
       setSaving(false);
     }
@@ -124,6 +130,7 @@ export default function EditTeamPage() {
     try {
       await fetch(`/api/teams/${id}`, { method: 'DELETE' });
       toast({ title: 'Team deleted', variant: 'success' });
+      analytics.teamDeleted();
       router.push('/teams');
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
