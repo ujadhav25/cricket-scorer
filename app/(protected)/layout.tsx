@@ -14,12 +14,19 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   if (!session?.user?.id) redirect('/login');
   const userId = session.user.id;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true },
-  });
+  const [user, roleRows] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    }),
+    prisma.$queryRaw<{ role: string }[]>`
+      SELECT role::text FROM "User" WHERE id = ${userId} LIMIT 1
+    `.catch(() => [] as { role: string }[]),
+  ]);
 
   if (!user) redirect('/login');
+
+  const isSuperAdmin = roleRows[0]?.role === 'SUPER_ADMIN';
 
   // ── Resolve the user's "self" player (first player owned by this user) ──
   let player = await prisma.player.findFirst({
@@ -52,12 +59,12 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     <div className="flex h-screen overflow-hidden bg-mesh">
       {/* Redirect to edit only when in player view with incomplete profile */}
       {playerIncomplete && editPath && <ClientNavigate to={editPath} />}
-      <Sidebar activeView={activeView} playerId={player?.id ?? null} playerIncomplete={playerIncomplete} />
+      <Sidebar activeView={activeView} playerId={player?.id ?? null} playerIncomplete={playerIncomplete} isSuperAdmin={isSuperAdmin} />
       <main className="flex-1 overflow-y-auto pb-20 pt-12 md:pt-0 md:pb-0">
         {children}
       </main>
-      <MobileHeader activeView={activeView} />
-      <BottomNav activeView={activeView} playerId={player?.id ?? null} playerIncomplete={playerIncomplete} />
+      <MobileHeader activeView={activeView} isSuperAdmin={isSuperAdmin} />
+      <BottomNav activeView={activeView} playerId={player?.id ?? null} playerIncomplete={playerIncomplete} isSuperAdmin={isSuperAdmin} />
       <PushPermissionPrompt />
       <PwaInstallPrompt />
     </div>

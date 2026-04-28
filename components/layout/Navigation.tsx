@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ShieldAlert } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 
 const ORGANIZER_NAV = [
@@ -43,6 +43,7 @@ interface NavProps {
   activeView: 'organizer' | 'player';
   playerId?: string | null;
   playerIncomplete?: boolean;
+  isSuperAdmin?: boolean;
 }
 
 function getNavItems(activeView: 'organizer' | 'player', playerId?: string | null, playerIncomplete?: boolean) {
@@ -121,7 +122,7 @@ function ViewSwitchButton({ activeView }: { activeView: 'organizer' | 'player' }
   );
 }
 
-export function MobileHeader({ activeView }: { activeView: 'organizer' | 'player' }) {
+export function MobileHeader({ activeView, isSuperAdmin }: { activeView: 'organizer' | 'player'; isSuperAdmin?: boolean }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-40 flex h-12 items-center justify-between px-4 glass-strong border-b border-border/20 md:hidden">
       <Link href="/dashboard" className="flex items-center gap-2">
@@ -129,6 +130,15 @@ export function MobileHeader({ activeView }: { activeView: 'organizer' | 'player
         <span className="text-sm font-bold text-gradient">CricScorer</span>
       </Link>
       <div className="flex items-center gap-2">
+        {isSuperAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-1 text-[10px] font-bold rounded-full px-1.5 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30"
+          >
+            <ShieldAlert className="h-3 w-3" />
+            SA
+          </Link>
+        )}
         <span className={cn(
           'text-[10px] font-bold rounded-full px-1.5 py-0.5',
           activeView === 'organizer'
@@ -143,7 +153,7 @@ export function MobileHeader({ activeView }: { activeView: 'organizer' | 'player
   );
 }
 
-export function Sidebar({ activeView, playerId, playerIncomplete }: NavProps) {
+export function Sidebar({ activeView, playerId, playerIncomplete, isSuperAdmin }: NavProps) {
   const pathname = usePathname();
   const navItems = getNavItems(activeView, playerId, playerIncomplete);
 
@@ -207,6 +217,17 @@ export function Sidebar({ activeView, playerId, playerIncomplete }: NavProps) {
         })}
       </nav>
       <div className="p-3 border-t border-border/20 space-y-1">
+        {isSuperAdmin && (
+          <Link
+            href="/admin"
+            onClick={() => analytics.navClick('/admin')}
+            className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-red-400 bg-red-500/[0.08] hover:bg-red-500/[0.12] border border-red-500/20 transition-colors"
+          >
+            <ShieldAlert className="h-[18px] w-[18px] shrink-0" />
+            <span>Admin Panel</span>
+            <span className="ml-auto text-[9px] font-bold bg-red-500/20 rounded-full px-1.5 py-0.5">SA</span>
+          </Link>
+        )}
         {!playerIncomplete && <ViewSwitchButton activeView={activeView} />}
         <p className="text-center text-[10px] text-muted-foreground/30 tabular-nums pt-1">
           v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
@@ -265,7 +286,7 @@ function ViewSwitchBottomButton({ activeView }: { activeView: 'organizer' | 'pla
   );
 }
 
-export function BottomNav({ activeView, playerId, playerIncomplete }: NavProps) {
+export function BottomNav({ activeView, playerId, playerIncomplete, isSuperAdmin }: NavProps) {
   const pathname = usePathname();
   const navItems = getNavItems(activeView, playerId, playerIncomplete);
   const items = navItems.slice(0, 4);
@@ -317,6 +338,15 @@ export function BottomNav({ activeView, playerId, playerIncomplete }: NavProps) 
         })}
         {!playerIncomplete && (
           <ViewSwitchBottomButton activeView={activeView} />
+        )}
+        {isSuperAdmin && (
+          <Link
+            href="/admin"
+            className="relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-red-400 hover:text-red-300 transition-colors"
+          >
+            <ShieldAlert className="h-5 w-5" />
+            <span>Admin</span>
+          </Link>
         )}
       </div>
     </nav>
