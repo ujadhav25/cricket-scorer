@@ -292,6 +292,7 @@ function ViewSwitchBottomButton({ activeView }: { activeView: 'organizer' | 'pla
 
 export function BottomNav({ activeView, playerId, playerIncomplete, isSuperAdmin }: NavProps) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const navItems = getNavItems(activeView, playerId, playerIncomplete);
   const items = navItems.slice(0, 4);
 
@@ -301,7 +302,8 @@ export function BottomNav({ activeView, playerId, playerIncomplete, isSuperAdmin
         v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
       </p>
       <div className="flex h-16 items-stretch">
-        {items.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, key, fallback, icon: Icon }) => {
+          const label = t(key) || fallback;
           const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
           const isLocked = playerIncomplete && !href.endsWith('/edit');
           if (isLocked) {

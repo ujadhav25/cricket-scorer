@@ -51,7 +51,7 @@ const nextConfig = {
 module.exports = withSentryConfig(nextConfig, {
   // Source map upload — set SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN in CI
   org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT ?? 'cricket-scorer',
+  project: process.env.SENTRY_PROJECT ?? 'javascript-nextjs',
 
   // Suppress build-time output unless in CI
   silent: !process.env.CI,
@@ -62,13 +62,20 @@ module.exports = withSentryConfig(nextConfig, {
   // Hide source maps from the client bundle
   hideSourceMaps: true,
 
-  // Tree-shake Sentry logger statements in production
-  disableLogger: true,
-
   // Tunnel Sentry events through /api/monitoring to bypass adblockers
-  // (no external Sentry domain needed in CSP)
   tunnelRoute: '/api/monitoring',
 
-  // Disable automatic Vercel Cron Monitors
-  automaticVercelMonitors: false,
+  // Don't fail the build if source map upload fails (e.g. bad token)
+  errorHandler(err, invokeErr, compilation) {
+    compilation.warnings.push('Sentry source map upload warning: ' + err.message);
+  },
+
+  webpack: {
+    // Tree-shake Sentry logger statements in production (replaces deprecated disableLogger)
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    // Disable automatic Vercel Cron Monitors (replaces deprecated automaticVercelMonitors)
+    automaticVercelMonitors: false,
+  },
 });
