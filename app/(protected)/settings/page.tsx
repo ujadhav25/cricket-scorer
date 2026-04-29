@@ -28,7 +28,7 @@ export default async function SettingsPage() {
   const { user } = session;
   const displayName = dbUser?.name ?? user.name ?? '';
   const phone = dbUser?.phone ?? '';
-  const isSuperAdmin = roleRows[0]?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = false; // Admin portal is now separate (/admin/login)
 
   return (
     <div className="p-6 space-y-6">

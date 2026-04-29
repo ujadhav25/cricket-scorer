@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { adminAuth } from '@/lib/admin-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +11,8 @@ export default async function AdminUsersPage({
 }: {
   searchParams: { q?: string; page?: string };
 }) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') redirect('/dashboard');
+  const session = await adminAuth();
+  if (!(session as any)?.admin) redirect('/admin/login');
 
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const search = searchParams.q ?? '';

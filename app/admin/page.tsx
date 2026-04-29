@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { adminAuth } from '@/lib/admin-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
@@ -16,8 +16,8 @@ function trend(curr: number, prev: number): { text: string; cls: string } {
 }
 
 export default async function AdminOverviewPage() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') redirect('/dashboard');
+  const session = await adminAuth();
+  if (!(session as any)?.admin) redirect('/admin/login');
 
   const now = new Date();
   const d7  = new Date(now.getTime() -  7 * 24 * 60 * 60 * 1000);
@@ -101,7 +101,6 @@ export default async function AdminOverviewPage() {
   const roleColor: Record<string, string> = {
     ORGANIZER:   'bg-blue-500/15 text-blue-400',
     PLAYER:      'bg-cricket-green-500/15 text-cricket-green',
-    SUPER_ADMIN: 'bg-red-500/15 text-red-400',
   };
 
   const statusColor: Record<string, string> = {
@@ -246,7 +245,7 @@ export default async function AdminOverviewPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${roleColor[u.role] ?? 'bg-muted text-muted-foreground'}`}>
-                      {u.role === 'SUPER_ADMIN' ? 'SA' : u.role === 'ORGANIZER' ? 'ORG' : 'PLR'}
+                      {u.role === 'ORGANIZER' ? 'ORG' : 'PLR'}
                     </span>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap">{formatDate(u.createdAt.toISOString())}</span>
                   </div>
@@ -268,7 +267,7 @@ export default async function AdminOverviewPage() {
         <CardContent className="p-0">
           <div className="divide-y divide-border/30">
             {recentMatches.map((m) => (
-              <Link key={m.id} href={`/matches/${m.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors">
+              <div key={m.id} className="flex items-center gap-3 px-4 py-2.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
                     <span style={{ color: m.teamA.color }}>{m.teamA.name}</span>
@@ -282,7 +281,7 @@ export default async function AdminOverviewPage() {
                 <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${statusColor[m.status] ?? ''}`}>
                   {m.status}
                 </span>
-              </Link>
+              </div>
             ))}
           </div>
         </CardContent>

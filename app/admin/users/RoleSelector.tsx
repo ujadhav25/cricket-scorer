@@ -8,12 +8,11 @@ interface Props {
   currentRole: string;
 }
 
-const roles = ['ORGANIZER', 'PLAYER', 'SUPER_ADMIN'];
+const roles = ['ORGANIZER', 'PLAYER'];
 
 const roleColor: Record<string, string> = {
   ORGANIZER: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
   PLAYER: 'bg-cricket-green-500/15 text-cricket-green border-cricket-green/30',
-  SUPER_ADMIN: 'bg-red-500/15 text-red-400 border-red-500/30',
 };
 
 export function RoleSelector({ userId, currentRole }: Props) {
@@ -48,7 +47,7 @@ export function RoleSelector({ userId, currentRole }: Props) {
               : 'bg-transparent border-border/30 text-muted-foreground hover:border-border'
           }`}
         >
-          {r === 'SUPER_ADMIN' ? 'ADMIN' : r}
+          {r === 'ORGANIZER' ? 'ORG' : 'PLR'}
         </button>
       ))}
     </div>

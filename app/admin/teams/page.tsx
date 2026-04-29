@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { adminAuth } from '@/lib/admin-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,8 +10,8 @@ export default async function AdminTeamsPage({
 }: {
   searchParams: { q?: string; page?: string };
 }) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') redirect('/dashboard');
+  const session = await adminAuth();
+  if (!(session as any)?.admin) redirect('/admin/login');
 
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const search = searchParams.q ?? '';
@@ -64,10 +64,10 @@ export default async function AdminTeamsPage({
                 {teams.map((t) => (
                   <tr key={t.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <Link href={`/admin/teams/${t.id}`} className="flex items-center gap-2 hover:underline hover:text-cricket-green transition-colors">
                         <div className="h-3 w-3 rounded-full shrink-0" style={{ background: t.color }} />
                         <span className="font-medium">{t.name}</span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{t.homeGround ?? '—'}</td>
                     <td className="px-4 py-3 text-right tabular-nums">{t._count.players}</td>

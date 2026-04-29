@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { adminAuth } from '@/lib/admin-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
@@ -19,8 +19,8 @@ export default async function AdminMatchesPage({
 }: {
   searchParams: { q?: string; page?: string; status?: string };
 }) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') redirect('/dashboard');
+  const session = await adminAuth();
+  if (!(session as any)?.admin) redirect('/admin/login');
 
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const search = searchParams.q ?? '';
@@ -68,30 +68,28 @@ export default async function AdminMatchesPage({
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">Matches</h1>
           <p className="text-sm text-muted-foreground">{total.toLocaleString()} total</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Status filter */}
-          <div className="flex gap-1">
-            {STATUS_OPTIONS.map((s) => (
-              <Link
-                key={s || 'all'}
-                href={buildHref({ status: s })}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                  statusFilter === s
-                    ? 'bg-cricket-green-500/20 border-cricket-green/40 text-cricket-green'
-                    : 'border-border/30 text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {s || 'All'}
-              </Link>
-            ))}
-          </div>
-          <AdminSearch placeholder="Search teams or venue…" />
-        </div>
+        <AdminSearch placeholder="Search teams or venue…" />
+      </div>
+      {/* Status filter pills */}
+      <div className="flex gap-1.5 flex-wrap">
+        {STATUS_OPTIONS.map((s) => (
+          <Link
+            key={s || 'all'}
+            href={buildHref({ status: s })}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              statusFilter === s
+                ? 'bg-cricket-green-500/20 border-cricket-green/40 text-cricket-green font-medium'
+                : 'border-border/40 text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            {s || 'All'}
+          </Link>
+        ))}
       </div>
 
       <Card>
@@ -114,7 +112,7 @@ export default async function AdminMatchesPage({
                   return (
                     <tr key={m.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3">
-                        <Link href={`/matches/${m.id}`} className="hover:underline font-medium">
+                        <Link href={`/admin/matches/${m.id}`} className="hover:underline hover:text-cricket-green transition-colors font-medium">
                           <span style={{ color: m.teamA.color }}>{m.teamA.name}</span>
                           <span className="text-muted-foreground mx-1 text-xs">vs</span>
                           <span style={{ color: m.teamB.color }}>{m.teamB.name}</span>

@@ -21,7 +21,7 @@ const securityHeaders = [
       "frame-src https://accounts.google.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://accounts.google.com",
     ].join('; '),
   },
 ];
