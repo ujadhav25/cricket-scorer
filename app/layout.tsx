@@ -15,10 +15,8 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ??
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
+      (process.env.NODE_ENV === 'production'
+        ? 'https://cricscorer.co.in'
         : 'http://localhost:3000')
   ),
   title: {
@@ -45,9 +43,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: 'CricScorer',
+    url: 'https://cricscorer.co.in',
     title: 'CricScorer — Real-time Cricket Scoring',
     description:
       'Score cricket matches in real-time, manage tournaments, track player stats and share live scoreboards with spectators.',
+  },
+  alternates: {
+    canonical: 'https://cricscorer.co.in',
   },
   twitter: {
     card: 'summary_large_image',
