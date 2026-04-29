@@ -66,8 +66,8 @@ module.exports = withSentryConfig(nextConfig, {
   tunnelRoute: '/api/monitoring',
 
   // Don't fail the build if source map upload fails (e.g. bad token)
-  errorHandler(err, invokeErr, compilation) {
-    compilation.warnings.push('Sentry source map upload warning: ' + err.message);
+  errorHandler(err) {
+    console.warn('[Sentry] Source map upload failed (non-fatal):', err.message);
   },
 
   webpack: {

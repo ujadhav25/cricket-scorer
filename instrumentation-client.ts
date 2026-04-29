@@ -16,3 +16,6 @@ Sentry.init({
   // Only send events in production (set NEXT_PUBLIC_SENTRY_DSN to enable in dev)
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
 });
+
+// Required for Sentry to instrument client-side navigations
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
