@@ -7,12 +7,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trophy } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { getViewMode } from '@/lib/view-mode';
+import { serverT } from '@/lib/locale';
 
 export default async function TournamentsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
 
   const isOrganizerView = getViewMode() === 'organizer';
+  const t = serverT();
 
   const tournaments = await prisma.tournament.findMany({
     where: isOrganizerView
@@ -34,12 +36,12 @@ export default async function TournamentsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Tournaments</h1>
+          <h1 className="text-2xl font-bold">{t('nav.tournaments')}</h1>
           <p className="text-muted-foreground">{tournaments.length} tournament{tournaments.length !== 1 ? 's' : ''}</p>
         </div>
         {isOrganizerView && (
           <Button asChild className="bg-cricket-green hover:bg-cricket-green/90">
-            <Link href="/tournaments/new"><Plus className="mr-2 h-4 w-4" />New</Link>
+            <Link href="/tournaments/new"><Plus className="mr-2 h-4 w-4" />{t('action.newTournament')}</Link>
           </Button>
         )}
       </div>
@@ -48,35 +50,35 @@ export default async function TournamentsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <Trophy className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
-            <p className="mb-1 font-semibold">No tournaments yet</p>
+            <p className="mb-1 font-semibold">{t('match.noMatches')}</p>
             <Button asChild className="mt-4 bg-cricket-green hover:bg-cricket-green/90">
-              <Link href="/tournaments/new">Create Tournament</Link>
+              <Link href="/tournaments/new">{t('action.newTournament')}</Link>
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {tournaments.map((t) => (
-            <Link key={t.id} href={`/tournaments/${t.id}`}>
+          {tournaments.map((tour) => (
+            <Link key={tour.id} href={`/tournaments/${tour.id}`}>
               <Card className="hover:border-cricket-green/40 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-semibold text-lg">{t.name}</p>
-                      <p className="text-sm text-muted-foreground">{t.format} · {t.teams.length} teams · {t._count.matches} matches</p>
-                      {t.startDate && <p className="text-xs text-muted-foreground mt-1">{formatDate(t.startDate)}</p>}
+                      <p className="font-semibold text-lg">{tour.name}</p>
+                      <p className="text-sm text-muted-foreground">{tour.format} · {tour.teams.length} teams · {tour._count.matches} matches</p>
+                      {tour.startDate && <p className="text-xs text-muted-foreground mt-1">{formatDate(tour.startDate)}</p>}
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      t.status === 'LIVE' ? 'bg-red-500 text-white' :
-                      t.status === 'COMPLETED' ? 'bg-green-700 text-white' : 'bg-muted text-muted-foreground'}`}>
-                      {t.status}
+                      tour.status === 'LIVE' ? 'bg-red-500 text-white' :
+                      tour.status === 'COMPLETED' ? 'bg-green-700 text-white' : 'bg-muted text-muted-foreground'}`}>
+                      {tour.status === 'LIVE' ? t('match.live') : tour.status === 'COMPLETED' ? t('match.completed') : t('match.upcoming')}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1">
-                    {t.teams.slice(0, 4).map(({ team }) => (
+                    {tour.teams.slice(0, 4).map(({ team }) => (
                       <span key={team.id} className="rounded-full px-2 py-0.5 text-xs" style={{ backgroundColor: team.color + '30', color: team.color }}>{team.name}</span>
                     ))}
-                    {t.teams.length > 4 && <span className="rounded-full bg-muted px-2 py-0.5 text-xs">+{t.teams.length - 4}</span>}
+                    {tour.teams.length > 4 && <span className="rounded-full bg-muted px-2 py-0.5 text-xs">+{tour.teams.length - 4}</span>}
                   </div>
                 </CardContent>
               </Card>

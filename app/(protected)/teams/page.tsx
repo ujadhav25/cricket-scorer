@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Shield } from 'lucide-react';
+import { serverT } from '@/lib/locale';
 
 export default async function TeamsPage() {
   const session = await auth();
@@ -13,6 +14,7 @@ export default async function TeamsPage() {
 
   const cookieStore = await cookies();
   const isPlayerView = (cookieStore.get('view-mode')?.value ?? 'player') === 'player';
+  const t = serverT();
 
   const teams = await prisma.team.findMany({
     where: {
@@ -33,12 +35,12 @@ export default async function TeamsPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Teams</h1>
+          <h1 className="text-3xl font-black tracking-tight">{t('nav.teams')}</h1>
           <p className="text-muted-foreground mt-0.5">{teams.length} team{teams.length !== 1 ? 's' : ''}</p>
         </div>
         {!isPlayerView && (
           <Button asChild>
-            <Link href="/teams/new"><Plus className="mr-2 h-4 w-4" />New Team</Link>
+            <Link href="/teams/new"><Plus className="mr-2 h-4 w-4" />{t('action.newTeam')}</Link>
           </Button>
         )}
       </div>
@@ -49,14 +51,14 @@ export default async function TeamsPage() {
             <div className="rounded-2xl bg-white/[0.04] p-4 mb-4">
               <Shield className="h-10 w-10 text-muted-foreground/40" />
             </div>
-            <p className="mb-1 font-bold">No teams yet</p>
+            <p className="mb-1 font-bold">{t('teams.noTeams')}</p>
             {isPlayerView ? (
               <p className="text-sm text-muted-foreground">Ask your organizer to share an invite link to join a team.</p>
             ) : (
               <>
-                <p className="text-sm text-muted-foreground mb-4">Create a team to start scoring matches</p>
+                <p className="text-sm text-muted-foreground mb-4">{t('teams.createFirst')}</p>
                 <Button asChild>
-                  <Link href="/teams/new">Create Team</Link>
+                  <Link href="/teams/new">{t('action.newTeam')}</Link>
                 </Button>
               </>
             )}
@@ -86,7 +88,7 @@ export default async function TeamsPage() {
                         <p className="font-bold text-base leading-tight truncate">{team.name}</p>
                         {team.homeGround
                           ? <p className="text-xs text-muted-foreground truncate mt-0.5">{team.homeGround}</p>
-                          : <p className="text-xs text-muted-foreground/50 mt-0.5">No home ground</p>
+                          : <p className="text-xs text-muted-foreground/50 mt-0.5">{t('teams.noHomeGround')}</p>
                         }
                       </div>
                     </div>
@@ -95,12 +97,12 @@ export default async function TeamsPage() {
                     <div className="flex items-center gap-4 mb-4 text-sm">
                       <div className="text-center">
                         <p className="font-black text-lg leading-none">{team.players.length}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Players</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">{t('nav.players')}</p>
                       </div>
                       <div className="h-8 w-px bg-border/50" />
                       <div className="text-center">
                         <p className="font-black text-lg leading-none">{totalMatches}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">Matches</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">{t('nav.matches')}</p>
                       </div>
                     </div>
 

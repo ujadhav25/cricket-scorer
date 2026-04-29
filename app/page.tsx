@@ -674,7 +674,11 @@ export default async function HomePage() {
           </p>
           <GoogleSignInButton />
           <p className="mt-4 text-xs text-muted-foreground/50">
-            By signing in you agree to our terms. We&apos;ll never spam you.
+            By signing in you agree to our{' '}
+            <a href="/terms" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">terms</a>
+            {' '}and{' '}
+            <a href="/privacy" className="underline underline-offset-2 hover:text-muted-foreground transition-colors">privacy policy</a>
+            . We&apos;ll never spam you.
           </p>
         </div>
         </ScrollReveal>
@@ -682,6 +686,13 @@ export default async function HomePage() {
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-border/30 px-4 py-8 text-center text-xs text-muted-foreground">
+        <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+          <span className="text-border">·</span>
+          <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
+          <span className="text-border">·</span>
+          <a href="/contact" className="hover:text-foreground transition-colors">Contact &amp; Support</a>
+        </div>
         © {new Date().getFullYear()} CricScorer &nbsp;·&nbsp; Free cricket scoring platform
         {process.env.NEXT_PUBLIC_APP_VERSION && (
           <span className="ml-3 inline-flex items-center rounded-full border border-border/50 bg-card/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground/70">

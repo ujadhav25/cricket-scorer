@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Users } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 import PlayersFilter from './PlayersFilter';
+import { serverT } from '@/lib/locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,8 @@ interface Props {
 export default async function PlayersPage({ searchParams }: Props) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
+
+  const t = serverT();
 
   const players = await prisma.player.findMany({
     where: {
@@ -39,7 +42,7 @@ export default async function PlayersPage({ searchParams }: Props) {
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Players</h1>
+          <h1 className="text-3xl font-black tracking-tight">{t('nav.players')}</h1>
           <p className="text-muted-foreground mt-0.5">{players.length} player{players.length !== 1 ? 's' : ''}</p>
         </div>
       </div>

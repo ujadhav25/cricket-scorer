@@ -7,10 +7,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Activity, Trophy, Clock, ChevronRight, Circle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { getViewMode } from '@/lib/view-mode';
+import { serverT } from '@/lib/locale';
 
 export default async function MatchesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
+  const t = serverT();
 
   const isOrganizerView = getViewMode() === 'organizer';
 
@@ -84,7 +86,7 @@ export default async function MatchesPage() {
                 </span>
               </div>
             ) : (
-              <span className="text-sm text-muted-foreground">Yet to bat</span>
+              <span className="text-sm text-muted-foreground">{t('match.yetToBat')}</span>
             )}
           </div>
         </div>
@@ -126,12 +128,12 @@ export default async function MatchesPage() {
               )}
               {isCompleted && (
                 <span className="rounded-full bg-cricket-green-500/10 border border-cricket-green-500/20 px-2.5 py-0.5 text-[10px] font-semibold text-cricket-green">
-                  Completed
+                  {t('match.completed')}
                 </span>
               )}
               {!isLive && !isCompleted && (
                 <span className="rounded-full bg-white/[0.04] border border-border/20 px-2.5 py-0.5 text-[10px] text-muted-foreground/50">
-                  Upcoming
+                  {t('match.upcoming')}
                 </span>
               )}
             </div>
@@ -149,7 +151,7 @@ export default async function MatchesPage() {
             {(winnerName || (isCompleted && !winnerName && inn1 && inn2)) && (
               <div className="mt-2.5 pt-2 border-t border-border/10 flex items-center justify-between">
                 <span className={`text-xs font-semibold ${winnerName ? 'text-cricket-green' : 'text-cricket-amber'}`}>
-                  {winnerName ? `${winnerName} won` : 'Match Tied'}
+                  {winnerName ? `${winnerName} ${t('match.won')}` : t('match.tied')}
                 </span>
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/50 group-hover:translate-x-0.5 transition-all" />
               </div>
@@ -165,14 +167,14 @@ export default async function MatchesPage() {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Matches</h1>
+          <h1 className="text-3xl font-black tracking-tight">{t('nav.matches')}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {matches.length} {matches.length === 1 ? 'match' : 'matches'}
-            {live.length > 0 && <span className="text-red-400 font-medium"> · {live.length} live now</span>}
+            {matches.length} {matches.length === 1 ? t('nav.matches').slice(0,-1).toLowerCase() : t('nav.matches').toLowerCase()}
+            {live.length > 0 && <span className="text-red-400 font-medium"> · {live.length} {t('match.liveNow')}</span>}
           </p>
         </div>
         <Button asChild>
-          <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />New Match</Link>
+          <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />{t('action.newMatch')}</Link>
         </Button>
       </div>
 
@@ -182,10 +184,10 @@ export default async function MatchesPage() {
             <div className="rounded-2xl bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-5 mb-5">
               <Activity className="h-10 w-10 text-muted-foreground/30" />
             </div>
-            <p className="font-bold text-lg mb-1">No matches yet</p>
-            <p className="text-sm text-muted-foreground/50 mb-5">Create your first match to start scoring</p>
+            <p className="font-bold text-lg mb-1">{t('dash.noMatches')}</p>
+            <p className="text-sm text-muted-foreground/50 mb-5">{t('dash.createFirst')}</p>
             <Button asChild>
-              <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />Create Match</Link>
+              <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />{t('action.createMatch')}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -198,7 +200,7 @@ export default async function MatchesPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                 </div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-red-400">Live</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-red-400">{t('match.live')}</h2>
                 <span className="text-xs text-muted-foreground/60">{live.length}</span>
               </div>
               <div className="space-y-2">
@@ -210,7 +212,7 @@ export default async function MatchesPage() {
             <section className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <Clock className="h-3 w-3 text-muted-foreground/40" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Upcoming</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">{t('match.upcoming')}</h2>
                 <span className="text-xs text-muted-foreground/60">{upcoming.length}</span>
               </div>
               <div className="space-y-2">
@@ -222,7 +224,7 @@ export default async function MatchesPage() {
             <section className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <Trophy className="h-3 w-3 text-muted-foreground/40" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Completed</h2>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">{t('match.completed')}</h2>
                 <span className="text-xs text-muted-foreground/60">{completed.length}</span>
               </div>
               <div className="space-y-2">

@@ -21,6 +21,7 @@ import { getPusherClient, matchChannel, PUSHER_EVENTS } from '@/lib/pusher';
 import React from 'react';
 import { ShareMatchButton } from '@/components/ShareMatchButton';
 import { analytics } from '@/lib/analytics';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface ScoringClientProps {
   match: any;
@@ -665,6 +666,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
   // Player search state for batsman/bowler selection
   const [batsmanSearch, setBatsmanSearch] = React.useState('');
   const [bowlerSearch, setBowlerSearch] = React.useState('');
+  const { t } = useLocale();
 
   const targetRuns = (() => {
     if (currentInnings?.inningsNumber === 4 || effectiveSuperOverInnings4Setup) {
@@ -728,7 +730,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
       {/* Super Over banner */}
       {isSuperOver && (
         <div className="bg-yellow-500/20 border-b border-yellow-500/40 px-4 py-1.5 text-center text-xs font-bold text-yellow-400 tracking-widest">
-          ⚡ SUPER OVER
+          ⚡ {t('match.superOver').toUpperCase()}
         </div>
       )}
 
@@ -750,19 +752,19 @@ export function ScoringClient({ match }: ScoringClientProps) {
         {/* Batsmen setup */}
         {!store.strikerId || !store.nonStrikerId ? (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
-            <p className="font-semibold text-amber-400">Select Opening Batsmen</p>
+            <p className="font-semibold text-amber-400">{t('scoring.selectBatsmen')}</p>
             <input
               type="text"
-              placeholder="Search player..."
+              placeholder={t('scoring.searchPlayer')}
               value={batsmanSearch}
               onChange={(e) => setBatsmanSearch(e.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-cricket-green transition-colors"
             />
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Striker *</Label>
+                <Label className="text-xs">{t('scoring.striker')} *</Label>
                 <Select onValueChange={(v) => store.setStriker(v)}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Striker" /></SelectTrigger>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder={t('scoring.striker')} /></SelectTrigger>
                   <SelectContent>
                     {allBattingPlayers
                       .filter((p: any) => !batsmanSearch || p.name.toLowerCase().includes(batsmanSearch.toLowerCase()))
@@ -773,9 +775,9 @@ export function ScoringClient({ match }: ScoringClientProps) {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Non-Striker *</Label>
+                <Label className="text-xs">{t('scoring.nonStriker')} *</Label>
                 <Select onValueChange={(v) => store.setNonStriker(v)}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Non-striker" /></SelectTrigger>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder={t('scoring.nonStriker')} /></SelectTrigger>
                   <SelectContent>
                     {allBattingPlayers
                       .filter((p: any) => !batsmanSearch || p.name.toLowerCase().includes(batsmanSearch.toLowerCase()))
@@ -792,14 +794,14 @@ export function ScoringClient({ match }: ScoringClientProps) {
             {/* Striker */}
             <div className="rounded-lg border border-border bg-card p-3">
               <div className="flex items-center gap-1 text-xs text-cricket-green font-semibold mb-1">
-                <span>⚡</span> STRIKER
+                <span>⚡</span> {t('scoring.striker').toUpperCase()}
               </div>
               <p className="font-semibold truncate">{allBattingPlayers.find((p: any) => p.id === store.strikerId)?.name ?? '—'}</p>
               <p className="text-lg font-bold">{strikerDisplayRuns}<span className="text-sm text-muted-foreground">({strikerDisplayBalls})</span></p>
             </div>
             {/* Non-striker */}
             <div className="rounded-lg border border-border bg-card p-3">
-              <div className="text-xs text-muted-foreground font-semibold mb-1">NON-STRIKER</div>
+              <div className="text-xs text-muted-foreground font-semibold mb-1">{t('scoring.nonStriker').toUpperCase()}</div>
               <p className="font-semibold truncate">{allBattingPlayers.find((p: any) => p.id === store.nonStrikerId)?.name ?? '—'}</p>
               <p className="text-lg font-bold">{nonStrikerDisplayRuns}<span className="text-sm text-muted-foreground">({nonStrikerDisplayBalls})</span></p>
             </div>
@@ -809,16 +811,16 @@ export function ScoringClient({ match }: ScoringClientProps) {
         {/* Bowler setup */}
         {!store.currentBowlerId ? (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-            <p className="mb-2 font-semibold text-amber-400">Select Bowler</p>
+            <p className="mb-2 font-semibold text-amber-400">{t('scoring.selectBowler')}</p>
             <input
               type="text"
-              placeholder="Search bowler..."
+              placeholder={t('scoring.searchBowler')}
               value={bowlerSearch}
               onChange={(e) => setBowlerSearch(e.target.value)}
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-cricket-green transition-colors mb-2"
             />
             <Select onValueChange={(v) => store.setBowler(v)}>
-              <SelectTrigger><SelectValue placeholder="Select bowler" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t('scoring.selectBowler')} /></SelectTrigger>
               <SelectContent>
                 {[...fieldingTeam.players]
                   .filter((tp: any) => !bowlerSearch || tp.player.name.toLowerCase().includes(bowlerSearch.toLowerCase()))
@@ -834,7 +836,7 @@ export function ScoringClient({ match }: ScoringClientProps) {
                       <SelectItem key={tp.player.id} value={tp.player.id} disabled={isDisabled}>
                         <span className="flex items-center gap-2">
                           {tp.player.name}
-                          {isPrev && <span className="text-xs text-muted-foreground">(bowled last over)</span>}
+                          {isPrev && <span className="text-xs text-muted-foreground">({t('match.overs').toLowerCase()} last)</span>}
                           {isBatting && <span className="text-xs text-muted-foreground">(currently batting)</span>}
                         </span>
                       </SelectItem>
@@ -847,13 +849,13 @@ export function ScoringClient({ match }: ScoringClientProps) {
           <div className="rounded-lg border border-border bg-card p-3">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-muted-foreground font-semibold mb-1">BOWLER</div>
+                <div className="text-xs text-muted-foreground font-semibold mb-1">{t('bowl.bowler').toUpperCase()}</div>
                 <p className="font-semibold">{fieldingTeam.players.find((tp: any) => tp.player.id === store.currentBowlerId)?.player.name ?? '—'}</p>
                 {bowlerScore && (
                   <p className="text-sm text-muted-foreground">{formatOvers(legalBallCountForBowler(mergedDeliveries, store.currentBowlerId ?? ''))} ov · {bowlerDisplayRuns} runs · {bowlerScore.wickets}W</p>
                 )}
               </div>
-              <Button variant="outline" size="sm" onClick={() => store.setBowler('')}>Change</Button>
+              <Button variant="outline" size="sm" onClick={() => store.setBowler('')}>{t('scoring.change')}</Button>
             </div>
           </div>
         )}

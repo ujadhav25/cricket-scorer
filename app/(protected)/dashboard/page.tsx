@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { Plus, Activity, Trophy, Users, Shield, Radio, Clock, TrendingUp, Target, ArrowRight, User, Star } from 'lucide-react';
 import { getViewMode } from '@/lib/view-mode';
+import { serverT } from '@/lib/locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,8 @@ export default async function DashboardPage() {
     return <PlayerDashboard userId={userId} playerId={player?.id ?? null} name={currentUser?.name ?? session.user.name ?? null} />;
   }
 
-  // ─── Organizer Dashboard ──────────────────────────────────────────────────
+  // ─── Organizer Dashboard ────────────────────────────────────────────────
+  const t = serverT();
 
   const [recentMatches, activeTournaments, playerCount, teamCount, totalMatchCount, analyticsData] = await Promise.all([
     prisma.match.findMany({
@@ -93,17 +95,17 @@ export default async function DashboardPage() {
   const completedCount = analyticsData.length;
 
   const QUICK_ACTIONS = [
-    { href: '/matches/new',     label: 'New Match',      icon: Activity, gradient: 'from-cricket-green-500 to-emerald-600' },
-    { href: '/tournaments/new', label: 'New Tournament', icon: Trophy,   gradient: 'from-cricket-amber-500 to-orange-600' },
-    { href: '/players/new',     label: 'Add Player',     icon: Users,    gradient: 'from-blue-500 to-indigo-600' },
-    { href: '/teams/new',       label: 'New Team',       icon: Shield,   gradient: 'from-purple-500 to-violet-600' },
+    { href: '/matches/new',     label: t('action.newMatch'),      icon: Activity, gradient: 'from-cricket-green-500 to-emerald-600' },
+    { href: '/tournaments/new', label: t('action.newTournament'), icon: Trophy,   gradient: 'from-cricket-amber-500 to-orange-600' },
+    { href: '/players/new',     label: t('action.addPlayer'),     icon: Users,    gradient: 'from-blue-500 to-indigo-600' },
+    { href: '/teams/new',       label: t('action.newTeam'),       icon: Shield,   gradient: 'from-purple-500 to-violet-600' },
   ];
 
   const STATS = [
-    { label: 'Total Matches', value: totalMatchCount,        icon: Activity, color: 'text-cricket-green' },
-    { label: 'Tournaments',   value: activeTournaments.length, icon: Trophy,   color: 'text-cricket-amber' },
-    { label: 'Players',       value: playerCount,            icon: Users,    color: 'text-blue-400' },
-    { label: 'Teams',         value: teamCount,              icon: Shield,   color: 'text-purple-400' },
+    { label: t('dash.totalMatches'),       value: totalMatchCount,          icon: Activity, color: 'text-cricket-green' },
+    { label: t('nav.tournaments'),         value: activeTournaments.length, icon: Trophy,   color: 'text-cricket-amber' },
+    { label: t('nav.players'),             value: playerCount,              icon: Users,    color: 'text-blue-400' },
+    { label: t('nav.teams'),               value: teamCount,                icon: Shield,   color: 'text-purple-400' },
   ];
 
   return (
@@ -114,11 +116,11 @@ export default async function DashboardPage() {
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
             Hey, {session.user.name?.split(' ')[0]} <span className="inline-block animate-bounce-subtle">👋</span>
           </h1>
-          <p className="mt-1 text-muted-foreground">Here&apos;s your cricket overview</p>
+          <p className="mt-1 text-muted-foreground">{t('dash.overview')}</p>
         </div>
         <Button asChild>
           <Link href="/matches/new" className="gap-2">
-            <Plus className="h-4 w-4" /> New Match
+            <Plus className="h-4 w-4" /> {t('action.newMatch')}
           </Link>
         </Button>
       </div>
@@ -144,12 +146,12 @@ export default async function DashboardPage() {
       {(topScorer || topWicketTaker) && (
         <div>
           <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-cricket-green" /> Analytics
+            <TrendingUp className="h-5 w-5 text-cricket-green" /> {t('dash.analytics')}
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Card className="gradient-border">
               <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Completed</p>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">{t('match.completed')}</p>
                 <p className="text-4xl font-black text-gradient">{completedCount}</p>
                 <p className="text-xs text-muted-foreground mt-1">of {totalMatchCount} matches</p>
               </CardContent>
@@ -157,18 +159,18 @@ export default async function DashboardPage() {
             {topScorer && (
               <Card className="group hover:glow-green transition-all duration-300">
                 <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Top Scorer</p>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">{t('dash.topScorer')}</p>
                   <p className="text-lg font-bold truncate">{topScorer.name}</p>
-                  <p className="text-sm text-cricket-green font-semibold mt-0.5">{topScorer.runs} runs</p>
+                  <p className="text-sm text-cricket-green font-semibold mt-0.5">{topScorer.runs} {t('misc.runs')}</p>
                 </CardContent>
               </Card>
             )}
             {topWicketTaker && (
               <Card className="group hover:glow-amber transition-all duration-300">
                 <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Top Wicket-Taker</p>
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">{t('dash.topWicketTaker')}</p>
                   <p className="text-lg font-bold truncate">{topWicketTaker.name}</p>
-                  <p className="text-sm text-cricket-amber font-semibold mt-0.5">{topWicketTaker.wickets} wickets</p>
+                  <p className="text-sm text-cricket-amber font-semibold mt-0.5">{topWicketTaker.wickets} {t('misc.wickets')}</p>
                 </CardContent>
               </Card>
             )}
@@ -179,7 +181,7 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
-          <Target className="h-5 w-5 text-cricket-amber" /> Quick Actions
+          <Target className="h-5 w-5 text-cricket-amber" /> {t('dash.quickActions')}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {QUICK_ACTIONS.map(({ href, label, icon: Icon, gradient }) => (
@@ -198,10 +200,10 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <Activity className="h-5 w-5 text-blue-400" /> Recent Matches
+            <Activity className="h-5 w-5 text-blue-400" /> {t('dash.recentMatches')}
           </h2>
           <Link href="/matches" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
-            View all <ArrowRight className="h-3.5 w-3.5" />
+            {t('action.viewAll')} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
         {recentMatches.length === 0 ? (
@@ -210,9 +212,9 @@ export default async function DashboardPage() {
               <div className="rounded-2xl bg-white/[0.04] p-4 mb-4">
                 <Activity className="h-8 w-8 text-muted-foreground/40" />
               </div>
-              <p className="text-muted-foreground mb-4">No matches yet</p>
+              <p className="text-muted-foreground mb-4">{t('dash.noMatches')}</p>
               <Button asChild>
-                <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />Start Your First Match</Link>
+                <Link href="/matches/new"><Plus className="mr-1.5 h-4 w-4" />{t('dash.startFirst')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -255,12 +257,12 @@ export default async function DashboardPage() {
                         )}
                         {isCompleted && (
                           <span className="flex items-center gap-1 rounded-full bg-cricket-green-500/10 border border-cricket-green-500/20 px-2.5 py-1 text-xs font-semibold text-cricket-green shrink-0">
-                            <Trophy className="h-3 w-3" /> Done
+                            <Trophy className="h-3 w-3" /> {t('match.completed')}
                           </span>
                         )}
                         {!isLive && !isCompleted && (
                           <span className="flex items-center gap-1 rounded-full bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground shrink-0">
-                            <Clock className="h-3 w-3" /> Upcoming
+                            <Clock className="h-3 w-3" /> {t('match.upcoming')}
                           </span>
                         )}
                       </div>
@@ -282,7 +284,7 @@ export default async function DashboardPage() {
                                   <span className="text-xs text-muted-foreground/60 ml-1">({Math.floor(inn.totalOvers)}.{Math.round((inn.totalOvers % 1) * 6)})</span>
                                 </p>
                               ) : (
-                                <p className="text-xs text-muted-foreground/60">Yet to bat</p>
+                                <p className="text-xs text-muted-foreground/60">{t('match.yetToBat')}</p>
                               )}
                             </div>
                           ))}
@@ -291,7 +293,7 @@ export default async function DashboardPage() {
 
                       <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground/60">
                         <span>{formatDate(match.createdAt)}</span>
-                        {winnerName && <span className="text-cricket-amber font-semibold">🏆 {winnerName} won</span>}
+                        {winnerName && <span className="text-cricket-amber font-semibold">🏆 {winnerName} {t('match.won')}</span>}
                       </div>
                     </CardContent>
                   </Card>
@@ -307,10 +309,10 @@ export default async function DashboardPage() {
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-cricket-amber" /> Active Tournaments
-            </h2>
-            <Link href="/tournaments" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
-              View all <ArrowRight className="h-3.5 w-3.5" />
+            <Trophy className="h-5 w-5 text-cricket-amber" /> {t('dash.activeTournaments')}
+          </h2>
+          <Link href="/tournaments" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
+            {t('action.viewAll')} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="space-y-3">
@@ -346,6 +348,7 @@ async function PlayerDashboard({
   playerId: string | null;
   name: string | null;
 }) {
+  const t = serverT();
   const player = await prisma.player.findUnique({
     where: { id: playerId ?? '' },
     include: {
@@ -419,7 +422,7 @@ async function PlayerDashboard({
       {player.teamPlayers.length > 0 ? (
         <div>
           <h2 className="mb-3 text-lg font-bold flex items-center gap-2">
-            <Shield className="h-5 w-5 text-cricket-green" /> My Teams
+            <Shield className="h-5 w-5 text-cricket-green" /> {t('dash.myTeams')}
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {player.teamPlayers.map(({ team }) => (
@@ -446,7 +449,7 @@ async function PlayerDashboard({
       ) : (
         <div>
           <h2 className="mb-3 text-lg font-bold flex items-center gap-2">
-            <Shield className="h-5 w-5 text-cricket-green" /> My Teams
+            <Shield className="h-5 w-5 text-cricket-green" /> {t('dash.myTeams')}
           </h2>
           <Card className="border-dashed">
             <CardContent className="py-6 text-center text-sm text-muted-foreground">
@@ -459,16 +462,16 @@ async function PlayerDashboard({
       {/* Career Batting */}
       <div>
         <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
-          <Activity className="h-5 w-5 text-cricket-green" /> Career Batting
+          <Activity className="h-5 w-5 text-cricket-green" /> {t('dash.careerBatting')}
         </h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
-            { label: 'Runs', value: totalRuns },
-            { label: 'Innings', value: innings },
-            { label: 'Avg', value: average },
-            { label: 'SR', value: strikeRate },
-            { label: 'HS', value: highScore },
-            { label: '50s / 100s', value: `${fifties} / ${hundreds}` },
+            { label: t('match.runs'),   value: totalRuns },
+            { label: t('match.innings'), value: innings },
+            { label: t('player.average'), value: average },
+            { label: t('bat.sr'),       value: strikeRate },
+            { label: 'HS',             value: highScore },
+            { label: '50s / 100s',     value: `${fifties} / ${hundreds}` },
           ].map(({ label, value }) => (
             <Card key={label}>
               <CardContent className="p-3 text-center">
@@ -484,14 +487,14 @@ async function PlayerDashboard({
       {totalOversBowled > 0 && (
         <div>
           <h2 className="mb-4 text-lg font-bold flex items-center gap-2">
-            <Target className="h-5 w-5 text-cricket-amber" /> Career Bowling
+            <Target className="h-5 w-5 text-cricket-amber" /> {t('dash.careerBowling')}
           </h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Wickets', value: totalWickets },
-              { label: 'Economy', value: economy },
-              { label: 'Avg', value: bowlingAvg },
-              { label: 'Best', value: bestFigures.w > 0 ? `${bestFigures.w}/${bestFigures.r}` : '—' },
+              { label: t('match.wickets'),    value: totalWickets },
+              { label: t('player.economy'),    value: economy },
+              { label: t('player.average'),    value: bowlingAvg },
+              { label: 'Best',                 value: bestFigures.w > 0 ? `${bestFigures.w}/${bestFigures.r}` : '—' },
             ].map(({ label, value }) => (
               <Card key={label}>
                 <CardContent className="p-3 text-center">
@@ -509,10 +512,10 @@ async function PlayerDashboard({
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-400" /> Recent Performances
+              <Clock className="h-5 w-5 text-blue-400" /> {t('dash.recentPerformances')}
             </h2>
             <Link href="/history" className="text-sm text-cricket-green hover:underline font-medium flex items-center gap-1">
-              Full history <ArrowRight className="h-3.5 w-3.5" />
+              {t('action.fullHistory')} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
           <div className="space-y-2">

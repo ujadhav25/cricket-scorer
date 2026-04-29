@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useLocale } from '@/components/LocaleProvider';
 
 const DISMISSAL_TYPES = ['Bowled', 'Caught', 'LBW', 'RunOut', 'Stumped', 'HitWicket', 'RetiredHurt', 'RetiredOut'];
 
@@ -46,6 +47,7 @@ export function WicketModal({
   const needsFielder = ['Caught', 'RunOut', 'Stumped'].includes(wicketType);
   const isRetired = RETIRED_TYPES.includes(wicketType);
   const isLastWicket = availableBatsmen.length === 0;
+  const { t } = useLocale();
 
   function handleConfirm() {
     if (!isLastWicket && !isRetired && !nextBatsmanId) return;
@@ -70,7 +72,7 @@ export function WicketModal({
 
         <div className="space-y-4">
           <div>
-            <Label className="mb-1 block">Dismissal Type</Label>
+            <Label className="mb-1 block">{t('scoring.dismissalType')}</Label>
             <div className="grid grid-cols-3 gap-2">
               {DISMISSAL_TYPES.map((type) => (
                 <button
@@ -102,7 +104,7 @@ export function WicketModal({
               <Label className="mb-1 block">Fielder</Label>
               <Select value={fielderId} onValueChange={setFielderId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select fielder" />
+                  <SelectValue placeholder={t('scoring.fielder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {fieldingPlayers.map((p) => (
@@ -114,13 +116,13 @@ export function WicketModal({
           )}
 
           <div>
-            <Label className="mb-1 block">{isRetired ? 'Next Batsman (replacement)' : 'Next Batsman'}</Label>
+            <Label className="mb-1 block">{isRetired ? `${t('scoring.nextBatsman')} (replacement)` : t('scoring.nextBatsman')}</Label>
             {isLastWicket ? (
-              <p className="text-sm text-red-400 font-semibold py-2">All out! No more batsmen available.</p>
+              <p className="text-sm text-red-400 font-semibold py-2">{t('scoring.allOut')}</p>
             ) : (
               <Select value={nextBatsmanId} onValueChange={setNextBatsmanId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select next batsman" />
+                  <SelectValue placeholder={t('scoring.nextBatsman')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableBatsmen.map((p) => (
@@ -132,14 +134,14 @@ export function WicketModal({
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+            <Button variant="outline" className="flex-1" onClick={onClose}>{t('action.cancel')}</Button>
             <Button
               variant={isRetired ? 'outline' : 'destructive'}
               className={`flex-1 ${isRetired ? 'border-amber-500 text-amber-400 hover:bg-amber-500/10' : ''}`}
               onClick={handleConfirm}
               disabled={!isLastWicket && !isRetired && !nextBatsmanId}
             >
-              Confirm
+              {t('scoring.confirm')}
             </Button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getAuthSession, unauthorizedResponse } from '@/lib/api-helpers';
+import { getAuthSession, unauthorizedResponse, serverErrorResponse } from '@/lib/api-helpers';
 
 const JoinTournamentSchema = z.object({
   teamId: z.string().min(1),
@@ -64,7 +64,6 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return serverErrorResponse(error);
   }
 }

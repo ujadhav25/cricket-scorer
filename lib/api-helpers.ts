@@ -1,4 +1,5 @@
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { NextResponse } from 'next/server';
 
 export async function getAuthSession() {
@@ -21,8 +22,8 @@ export function badRequestResponse(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
-export function serverErrorResponse(error: unknown) {
-  console.error(error);
+export function serverErrorResponse(error: unknown, context?: Record<string, unknown>) {
+  logger.error('API server error', error, context);
   return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 }
 

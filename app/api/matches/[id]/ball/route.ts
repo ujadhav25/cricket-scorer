@@ -319,7 +319,20 @@ export async function POST(
               { ...scorePayload, event: runs === 50 ? 'FIFTY' : 'CENTURY' },
             );
           }
-        }
+          // 5-wicket haul alert
+          const bowler = await prisma.bowlerScore.findUnique({
+            where: { inningsId_playerId: { inningsId: ballData.inningsId, playerId: ballData.bowlerId } },
+            select: { wickets: true, runs: true, player: { select: { name: true } } },
+          });
+          if (ballData.isWicket && bowler && bowler.wickets === 5) {
+            await sendMatchPushNotification(
+              params.id,
+              `🔥 5-WICKET HAUL! — ${teamNames}`,
+              `${bowler.player.name} takes 5/${bowler.runs}! Incredible bowling.`,
+              undefined,
+              { ...scorePayload, event: 'FIVE_WICKETS' },
+            );
+          }        }
       }
     } catch (_) {
       // Push notification errors are non-fatal

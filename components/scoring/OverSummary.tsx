@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface BallDotProps {
   runs: number;
@@ -46,13 +47,14 @@ interface OverSummaryProps {
 
 export function OverSummary({ deliveries, currentOver }: OverSummaryProps) {
   const overDeliveries = deliveries.filter((d) => d.overNumber === currentOver);
+  const { t } = useLocale();
 
   return (
     <div className="rounded-2xl border border-border/30 bg-card/50 backdrop-blur-sm p-4">
-      <p className="mb-2.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">Over {currentOver + 1}</p>
+      <p className="mb-2.5 text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('match.overs')} {currentOver + 1}</p>
       <div className="flex gap-2">
         {overDeliveries.length === 0 ? (
-          <span className="text-xs text-muted-foreground/60">No balls bowled yet</span>
+          <span className="text-xs text-muted-foreground/60">{t('scoring.noBallsBowled')}</span>
         ) : (
           overDeliveries.map((d, i) => (
             <BallDot

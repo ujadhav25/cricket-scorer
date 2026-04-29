@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface BallInputProps {
   onBall: (event: BallEvent) => void;
@@ -30,6 +31,7 @@ const EXTRA_META: Record<NonNullable<ExtraMode>, { label: string; gradient: stri
 
 export function BallInput({ onBall, disabled }: BallInputProps) {
   const [extraMode, setExtraMode] = React.useState<ExtraMode>(null);
+  const { t } = useLocale();
 
   function handleMain(runs: number) {
     onBall({ runs });
@@ -67,7 +69,7 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
               onClick={() => setExtraMode(null)}
               className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
-              ✕ Cancel
+              ✕ {t('action.cancel')}
             </button>
           </div>
           <div className="grid grid-cols-7 gap-2">
@@ -116,7 +118,7 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
             disabled={disabled}
             className="h-14 w-full rounded-2xl bg-gradient-to-r from-red-500 to-red-600 text-xl font-black text-white shadow-lg shadow-red-500/20 transition-all duration-200 hover:shadow-xl hover:shadow-red-500/30 hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           >
-            W — Wicket
+          W — {t('action.wicket')}
           </button>
         </>
       )}
@@ -124,13 +126,13 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
       {/* Extras row */}
       <div className="grid grid-cols-4 gap-2">
         {([
-          { key: 'wide'   as ExtraMode, label: 'Wd', gradient: 'from-yellow-500 to-yellow-600', shadow: 'shadow-yellow-500/20' },
-          { key: 'noBall' as ExtraMode, label: 'Nb', gradient: 'from-orange-500 to-orange-600', shadow: 'shadow-orange-500/20' },
-          { key: 'legBye' as ExtraMode, label: 'Lb', gradient: 'from-purple-500 to-purple-600', shadow: 'shadow-purple-500/20' },
-          { key: 'bye'    as ExtraMode, label: 'B',  gradient: 'from-indigo-500 to-indigo-600', shadow: 'shadow-indigo-500/20' },
-        ]).map(({ key, label, gradient, shadow }) => (
+          { key: 'wide'   as ExtraMode, labelKey: 'match.wideShort'   as const, gradient: 'from-yellow-500 to-yellow-600', shadow: 'shadow-yellow-500/20' },
+          { key: 'noBall' as ExtraMode, labelKey: 'match.noballShort' as const, gradient: 'from-orange-500 to-orange-600', shadow: 'shadow-orange-500/20' },
+          { key: 'legBye' as ExtraMode, labelKey: 'match.legbyeShort' as const, gradient: 'from-purple-500 to-purple-600', shadow: 'shadow-purple-500/20' },
+          { key: 'bye'    as ExtraMode, labelKey: 'match.byeShort'    as const, gradient: 'from-indigo-500 to-indigo-600', shadow: 'shadow-indigo-500/20' },
+        ]).map(({ key, labelKey, gradient, shadow }) => (
           <button
-            key={label}
+            key={labelKey}
             onClick={() => handleExtraSelect(key)}
             disabled={disabled}
             className={cn(
@@ -140,7 +142,7 @@ export function BallInput({ onBall, disabled }: BallInputProps) {
               extraMode === key ? 'ring-2 ring-white/50 ring-offset-1 ring-offset-background scale-95' : ''
             )}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>

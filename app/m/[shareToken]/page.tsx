@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { formatOvers, calcRunRate, calcStrikeRate, calcBowlingEconomy, legalBallCount, legalBallCountForBowler } from '@/lib/utils';
 import { LiveMatchUpdater } from '@/components/LiveMatchUpdater';
+import { LiveReactions } from '@/components/LiveReactions';
+import { serverT } from '@/lib/locale';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -87,6 +89,15 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
 
   if (!match) notFound();
 
+  // Fetch reaction counts server-side so they show on first load
+  const reactionRows = await prisma.matchReaction.findMany({
+    where: { matchId: match.id },
+    select: { emoji: true, count: true },
+  });
+  const initialReactionCounts: Record<string, number> = {};
+  for (const r of reactionRows) initialReactionCounts[r.emoji] = r.count;
+
+  const t = serverT();
   const isLive = match.status === 'LIVE';
   const isCompleted = match.status === 'COMPLETED';
 
@@ -150,14 +161,14 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
           </div>
           {isLive && (
             <span className="flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1 text-xs font-bold animate-pulse">
-              ● LIVE
+              ● {t('match.live').toUpperCase()}
             </span>
           )}
           {isCompleted && (
-            <span className="rounded-full bg-green-700 px-3 py-1 text-xs font-semibold">COMPLETED</span>
+            <span className="rounded-full bg-green-700 px-3 py-1 text-xs font-semibold">{t('match.completed').toUpperCase()}</span>
           )}
           {!isLive && !isCompleted && (
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/60">UPCOMING</span>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/60">{t('match.upcoming').toUpperCase()}</span>
           )}
         </div>
       </header>
@@ -189,7 +200,7 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
                 isWinner ? 'ring-2 ring-yellow-400/60' : '',
               ].join(' ')}>
                 <div className={`h-0.5 rounded-full mb-2 ${color === 'blue' ? 'bg-blue-500' : 'bg-rose-500'}`} />
-                {isWinner && <div className="text-xs font-bold text-yellow-400 mb-1">🏆 Winner</div>}
+                {isWinner && <div className="text-xs font-bold text-yellow-400 mb-1">🏆 {t('match.winner')}</div>}
                 <p className={`text-xs font-medium mb-1 ${color === 'blue' ? 'text-blue-400' : 'text-rose-400'}`}>{team.name}</p>
                 {inn ? (
                   <>
@@ -199,7 +210,7 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
                     <p className="text-xs text-white/50 mt-0.5">({formatOvers(legalBallCount(inn.deliveries))} ov)</p>
                   </>
                 ) : (
-                  <p className="text-sm text-white/40">Yet to bat</p>
+                  <p className="text-sm text-white/40">{t('match.yetToBat')}</p>
                 )}
               </div>
             );
@@ -209,7 +220,7 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
         {/* Live: current over balls */}
         {isLive && currentInnings && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs text-white/50 font-medium mb-2">Over {derivedCurrentOver + 1} — in progress</p>
+            <p className="text-xs text-white/50 font-medium mb-2">{t('match.overs')} {derivedCurrentOver + 1} — {t('match.inProgress')}</p>
             <div className="flex gap-2 flex-wrap">
               {currentOverDeliveries.map((d, i) => {
                 let label = d.runs === 0 ? '•' : String(d.runs);
@@ -248,7 +259,7 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
             )
           ) : isLive && currentInnings?.inningsNumber === 2 ? (
             <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 px-4 py-3 text-sm">
-              <span className="font-semibold text-amber-400">Target: {inn1.totalRuns + 1}</span>
+              <span className="font-semibold text-amber-400">{t('match.target')}: {inn1.totalRuns + 1}</span>
               {' · '}
               <span className="text-white/70">
                 Need {Math.max(0, inn1.totalRuns + 1 - currentInnings.totalRuns)} off{' '}
@@ -270,22 +281,22 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
                 <div className="flex items-center gap-2">
                   <span className={`h-2.5 w-2.5 rounded-full ${isTeamA ? 'bg-blue-500' : 'bg-rose-500'}`} />
                   <span className="font-bold text-sm">{inn.battingTeam.name}</span>
-                  <span className="text-xs text-white/40">· {inn.inningsNumber <= 2 ? `Innings ${inn.inningsNumber}` : 'Super Over'}</span>
+                  <span className="text-xs text-white/40">· {inn.inningsNumber <= 2 ? `${t('match.innings')} ${inn.inningsNumber}` : t('match.superOver')}</span>
                 </div>
               </div>
               <div className="p-4 space-y-4">
                 {/* Batting */}
                 <div>
-                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>Batting</p>
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>{t('match.batting')}</p>
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-white/40 border-b border-white/10">
-                        <th className="pb-1 pr-3 text-left font-medium">Batsman</th>
-                        <th className="pb-1 pr-2 text-right font-medium">R</th>
-                        <th className="pb-1 pr-2 text-right font-medium">B</th>
-                        <th className="pb-1 pr-2 text-right font-medium">4s</th>
-                        <th className="pb-1 pr-2 text-right font-medium">6s</th>
-                        <th className="pb-1 text-right font-medium">SR</th>
+                        <th className="pb-1 pr-3 text-left font-medium">{t('bat.batsman')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bat.r')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bat.b')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bat.4s')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bat.6s')}</th>
+                        <th className="pb-1 text-right font-medium">{t('bat.sr')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -303,9 +314,9 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
                         </tr>
                       ))}
                       <tr>
-                        <td className="pt-2 text-white/40 text-xs" colSpan={2}>Extras</td>
+                        <td className="pt-2 text-white/40 text-xs" colSpan={2}>{t('match.extras')}</td>
                         <td className="pt-2 text-right text-white/40 text-xs" colSpan={4}>
-                          Wd {inn.wides} · Nb {inn.noBalls} · Lb {inn.legByes} · B {inn.byes}
+                          {t('match.wideShort')} {inn.wides} · {t('match.noballShort')} {inn.noBalls} · {t('match.legbyeShort')} {inn.legByes} · {t('match.byeShort')} {inn.byes}
                         </td>
                       </tr>
                     </tbody>
@@ -318,8 +329,8 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
                   return (
                     <div>
                       <div className={`border-t mb-3 ${isTeamA ? 'border-blue-500/15' : 'border-rose-500/15'}`} />
-                      <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>
-                        Overs
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>
+                        {t('match.overs')}
                       </p>
                       <div className="overflow-x-auto pb-1 -mx-1 px-1">
                         <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
@@ -366,15 +377,15 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
 
                 {/* Bowling */}
                 <div>
-                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>Bowling</p>
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isTeamA ? 'text-blue-400' : 'text-rose-400'}`}>{t('match.bowling')}</p>
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-white/40 border-b border-white/10">
-                        <th className="pb-1 pr-3 text-left font-medium">Bowler</th>
-                        <th className="pb-1 pr-2 text-right font-medium">O</th>
-                        <th className="pb-1 pr-2 text-right font-medium">R</th>
-                        <th className="pb-1 pr-2 text-right font-medium">W</th>
-                        <th className="pb-1 text-right font-medium">Econ</th>
+                        <th className="pb-1 pr-3 text-left font-medium">{t('bowl.bowler')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bowl.o')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bowl.r')}</th>
+                        <th className="pb-1 pr-2 text-right font-medium">{t('bowl.w')}</th>
+                        <th className="pb-1 text-right font-medium">{t('bowl.econ')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -451,8 +462,80 @@ export default async function PublicMatchPage({ params }: { params: { shareToken
           );
         })}
 
+        {/* ── HIGHLIGHTS REEL ── */}
+        {(() => {
+          type HL = { emoji: string; label: string; detail: string; color: string };
+          const highlights: HL[] = [];
+
+          match.innings.forEach((inn) => {
+            // Boundaries & wickets per ball
+            inn.deliveries.forEach((d) => {
+              if (d.isWicket) {
+                const how = d.wicketType ?? 'Out';
+                const fielder = d.fielder ? ` (${d.fielder.name})` : '';
+                highlights.push({
+                  emoji: '🎯',
+                  label: `WICKET — ${d.batsman.name}`,
+                  detail: `${how}${fielder} • ${d.overNumber + 1}.${d.ballNumber} ov • ${inn.battingTeam.name}`,
+                  color: 'border-red-500/30 bg-red-950/30 text-red-300',
+                });
+              } else if (d.runs === 6 && !d.isWide && !d.isNoBall) {
+                highlights.push({
+                  emoji: '💥',
+                  label: `SIX — ${d.batsman.name}`,
+                  detail: `off ${d.bowler.name} • ${d.overNumber + 1}.${d.ballNumber} ov • ${inn.battingTeam.name}`,
+                  color: 'border-green-500/30 bg-green-950/30 text-green-300',
+                });
+              } else if (d.runs === 4 && !d.isWide && !d.isNoBall) {
+                highlights.push({
+                  emoji: '🏏',
+                  label: `FOUR — ${d.batsman.name}`,
+                  detail: `off ${d.bowler.name} • ${d.overNumber + 1}.${d.ballNumber} ov • ${inn.battingTeam.name}`,
+                  color: 'border-blue-500/30 bg-blue-950/30 text-blue-300',
+                });
+              }
+            });
+
+            // Milestones from batter scores
+            inn.batterScores.forEach((bs) => {
+              if (bs.runs >= 100) highlights.push({ emoji: '💯', label: `CENTURY — ${bs.player.name}`, detail: `${bs.runs} (${bs.balls}b) • ${inn.battingTeam.name}`, color: 'border-yellow-500/30 bg-yellow-950/30 text-yellow-300' });
+              else if (bs.runs >= 50) highlights.push({ emoji: '⭐', label: `FIFTY — ${bs.player.name}`, detail: `${bs.runs} (${bs.balls}b) • ${inn.battingTeam.name}`, color: 'border-yellow-500/20 bg-yellow-950/20 text-yellow-400' });
+            });
+
+            // 5-wicket hauls
+            inn.bowlerScores.forEach((bs) => {
+              if (bs.wickets >= 5) highlights.push({ emoji: '🔥', label: `5-WICKET HAUL — ${bs.player.name}`, detail: `${bs.wickets}/${bs.runs} • ${inn.battingTeam.name} innings`, color: 'border-purple-500/30 bg-purple-950/30 text-purple-300' });
+            });
+          });
+
+          if (highlights.length === 0) return null;
+
+          return (
+            <div className="rounded-xl border border-white/15 overflow-hidden">
+              <div className="flex items-center gap-2 bg-white/5 border-b border-white/10 px-4 py-2.5">
+                <span className="text-sm">⚡</span>
+                <span className="text-sm font-bold">Match Highlights</span>
+                <span className="ml-auto text-xs text-white/40">{highlights.length} moments</span>
+              </div>
+              <div className="divide-y divide-white/5">
+                {highlights.map((h, i) => (
+                  <div key={i} className={`flex items-start gap-3 px-4 py-3 ${h.color} border-l-2`}>
+                    <span className="text-lg shrink-0 mt-0.5">{h.emoji}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold leading-tight">{h.label}</p>
+                      <p className="text-xs text-white/50 mt-0.5">{h.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Auto-refresh every 10s when live */}
         {isLive && <LiveMatchUpdater matchId={match.id} />}
+        {/* Emoji reactions — visible on all live matches */}
+        {isLive && <LiveReactions matchId={match.id} initialCounts={initialReactionCounts} />}
 
         <p className="text-center text-xs text-white/20 pb-2">Powered by CricScorer</p>
       </div>

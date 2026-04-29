@@ -13,6 +13,7 @@ import { MatchCharts } from '@/components/MatchCharts';
 import { PushSubscribeButton } from '@/components/PushSubscribeButton';
 import { CastButton } from '@/components/CastButton';
 import { MotmPicker } from '@/components/MotmPicker';
+import { serverT } from '@/lib/locale';
 
 export default async function MatchDetailPage({ params }: { params: { id: string } }) {
   const session = await auth();
@@ -49,6 +50,8 @@ export default async function MatchDetailPage({ params }: { params: { id: string
   });
 
   if (!match) notFound();
+
+  const t = serverT();
 
   // Determine winner and the SINGLE decisive innings number
   let winnerName: string | undefined;
@@ -105,9 +108,9 @@ export default async function MatchDetailPage({ params }: { params: { id: string
             <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
               match.status === 'LIVE' ? 'bg-red-500 text-white animate-pulse' :
               match.status === 'COMPLETED' ? 'bg-green-700 text-white' : 'bg-muted text-muted-foreground'}`}>
-              {match.status}
+              {match.status === 'LIVE' ? t('match.live') : match.status === 'COMPLETED' ? t('match.completed') : t('match.upcoming')}
             </span>
-            {winnerName && <span className="text-xs font-semibold text-yellow-400">🏆 {winnerName} won</span>}
+            {winnerName && <span className="text-xs font-semibold text-yellow-400">🏆 {winnerName} {t('match.won')}</span>}
           </div>
           {match.tossWinner && (
             <p className="text-xs text-muted-foreground mt-1">
@@ -118,12 +121,12 @@ export default async function MatchDetailPage({ params }: { params: { id: string
         <div className="flex flex-wrap items-center gap-2">
           {match.status !== 'COMPLETED' && match.userId === session.user.id && (
             <Button asChild size="sm" className="bg-cricket-green hover:bg-cricket-green/90">
-              <Link href={`/matches/${match.id}/score`}><Activity className="mr-1.5 h-4 w-4" />Score</Link>
+              <Link href={`/matches/${match.id}/score`}><Activity className="mr-1.5 h-4 w-4" />{t('action.score')}</Link>
             </Button>
           )}
           {match.userId === session.user.id && (
             <Button asChild size="sm" variant="outline">
-              <Link href={`/matches/${match.id}/edit`}><Edit className="mr-1.5 h-4 w-4" />Edit</Link>
+              <Link href={`/matches/${match.id}/edit`}><Edit className="mr-1.5 h-4 w-4" />{t('action.edit')}</Link>
             </Button>
           )}
           <CastButton matchId={match.id} />
@@ -145,9 +148,9 @@ export default async function MatchDetailPage({ params }: { params: { id: string
               isWinner ? 'ring-2 ring-yellow-400 shadow-[0_0_20px_4px_rgba(250,204,21,0.25)]' : '',
             ].join(' ')}>
               <div className={['absolute inset-x-0 top-0 h-1 rounded-t-xl', isTeamA ? 'bg-blue-500' : 'bg-rose-500'].join(' ')} />
-              {isWinner && <div className="text-xs font-bold text-yellow-400 mb-1">🏆 Winner</div>}
+              {isWinner && <div className="text-xs font-bold text-yellow-400 mb-1">🏆 {t('match.winner')}</div>}
               <p className="text-xs text-muted-foreground font-medium">{inn.battingTeam.name}</p>
-              <p className="text-xs text-muted-foreground">{inn.inningsNumber <= 2 ? `Innings ${inn.inningsNumber}` : 'Super Over'}</p>
+              <p className="text-xs text-muted-foreground">{inn.inningsNumber <= 2 ? `${t('match.innings')} ${inn.inningsNumber}` : t('match.superOver')}</p>
               <p className="text-3xl font-black mt-1">{inn.totalRuns}<span className="text-xl text-muted-foreground">/{inn.totalWickets}</span></p>
               <p className="text-xs text-muted-foreground">({formatOvers(legalBallCount(inn.deliveries))} ov)</p>
             </div>
@@ -159,13 +162,13 @@ export default async function MatchDetailPage({ params }: { params: { id: string
       {match.status === 'COMPLETED' && (
         <div className="flex items-center gap-3">
           <Star className="h-4 w-4 text-amber-400 shrink-0" />
-          <span className="text-sm font-medium text-muted-foreground">Player of the Match:</span>
+          <span className="text-sm font-medium text-muted-foreground">{t('match.motm')}:</span>
           {match.userId === session.user.id ? (
             <MotmPicker matchId={match.id} players={allMatchPlayers} currentMotmId={(match as any).motmPlayer?.id ?? null} />
           ) : (match as any).motmPlayer ? (
             <span className="text-sm font-semibold text-amber-300">{(match as any).motmPlayer.name}</span>
           ) : (
-            <span className="text-sm text-muted-foreground italic">Not announced</span>
+            <span className="text-sm text-muted-foreground italic">{t('match.notAnnounced')}</span>
           )}
         </div>
       )}
@@ -173,10 +176,10 @@ export default async function MatchDetailPage({ params }: { params: { id: string
       {/* ── Tabs ── */}
       <Tabs defaultValue="scorecard">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="scorecard">Scorecard</TabsTrigger>
-          <TabsTrigger value="overs">Overs</TabsTrigger>
-          <TabsTrigger value="commentary">Commentary</TabsTrigger>
-          <TabsTrigger value="charts">Charts</TabsTrigger>
+          <TabsTrigger value="scorecard">{t('match.scorecard')}</TabsTrigger>
+          <TabsTrigger value="overs">{t('match.overs')}</TabsTrigger>
+          <TabsTrigger value="commentary">{t('match.commentary')}</TabsTrigger>
+          <TabsTrigger value="charts">{t('match.charts')}</TabsTrigger>
         </TabsList>
 
         {/* ── SCORECARD TAB ── */}
@@ -194,7 +197,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                     <div className="flex items-center gap-2">
                       <span className={`h-3 w-3 rounded-full ${isTeamA ? 'bg-blue-500' : 'bg-rose-500'}`} />
                       <span className="font-bold">{inn.battingTeam.name}</span>
-                      <span className="text-xs text-muted-foreground">· {inn.inningsNumber <= 2 ? `Innings ${inn.inningsNumber}` : 'Super Over'}</span>
+                      <span className="text-xs text-muted-foreground">· {inn.inningsNumber <= 2 ? `${t('match.innings')} ${inn.inningsNumber}` : t('match.superOver')}</span>
                     </div>
                     <span className="text-sm font-bold">{inn.totalRuns}/{inn.totalWickets} <span className="text-xs font-normal text-muted-foreground">({formatOvers(legalBallCount(inn.deliveries))} ov)</span></span>
                   </div>
@@ -203,17 +206,17 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                 <div className="p-4 space-y-4">
                   {/* Batting */}
                   <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>Batting</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>{t('match.batting')}</p>
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                          <th className="pb-1.5 pr-2">Batsman</th>
-                          <th className="pb-1.5 text-xs text-muted-foreground text-left font-normal pr-2 max-w-[100px] hidden sm:table-cell">Dismissal</th>
-                          <th className="pb-1.5 pr-2 text-right">R</th>
-                          <th className="pb-1.5 pr-2 text-right">B</th>
-                          <th className="pb-1.5 pr-2 text-right">4s</th>
-                          <th className="pb-1.5 pr-2 text-right">6s</th>
-                          <th className="pb-1.5 text-right">SR</th>
+                          <th className="pb-1.5 pr-2">{t('bat.batsman')}</th>
+                          <th className="pb-1.5 text-xs text-muted-foreground text-left font-normal pr-2 max-w-[100px] hidden sm:table-cell">{t('match.dismissal')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bat.r')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bat.b')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bat.4s')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bat.6s')}</th>
+                          <th className="pb-1.5 text-right">{t('bat.sr')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -233,13 +236,13 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                         ))}
                         <tr>
                           <td className="pt-2 pb-1 text-xs text-muted-foreground" colSpan={2}>
-                            <span className="font-semibold">Extras</span>{' '}
-                            <span className="text-[11px]">Wd {inn.wides} · Nb {inn.noBalls} · Lb {inn.legByes} · B {inn.byes} = {inn.extras}</span>
+                            <span className="font-semibold">{t('match.extras')}</span>{' '}
+                            <span className="text-[11px]">{t('match.wideShort')} {inn.wides} · {t('match.noballShort')} {inn.noBalls} · {t('match.legbyeShort')} {inn.legByes} · {t('match.byeShort')} {inn.byes} = {inn.extras}</span>
                           </td>
                           <td className="pt-2 pb-1 text-right font-bold" colSpan={5}>{inn.extras}</td>
                         </tr>
                         <tr className="border-t border-border">
-                          <td className="pt-2 font-bold" colSpan={2}>Total</td>
+                          <td className="pt-2 font-bold" colSpan={2}>{t('match.total')}</td>
                           <td className="pt-2 text-right font-black" colSpan={5}>{inn.totalRuns}/{inn.totalWickets} ({formatOvers(legalBallCount(inn.deliveries))} ov)</td>
                         </tr>
                       </tbody>
@@ -250,16 +253,16 @@ export default async function MatchDetailPage({ params }: { params: { id: string
 
                   {/* Bowling */}
                   <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>Bowling</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>{t('match.bowling')}</p>
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                          <th className="pb-1.5 pr-4">Bowler</th>
-                          <th className="pb-1.5 pr-2 text-right">O</th>
-                          <th className="pb-1.5 pr-2 text-right">M</th>
-                          <th className="pb-1.5 pr-2 text-right">R</th>
-                          <th className="pb-1.5 pr-2 text-right">W</th>
-                          <th className="pb-1.5 text-right">Econ</th>
+                          <th className="pb-1.5 pr-4">{t('bowl.bowler')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bowl.o')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('match.maidens')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bowl.r')}</th>
+                          <th className="pb-1.5 pr-2 text-right">{t('bowl.w')}</th>
+                          <th className="pb-1.5 text-right">{t('bowl.econ')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -299,7 +302,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                       <>
                         <div className={`border-t ${dividerColor}`} />
                         <div>
-                          <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>Fall of Wickets</p>
+                          <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>{t('match.fallOfWickets')}</p>
                           <div className="flex flex-wrap gap-1.5">
                             {fow.map((f) => (
                               <div key={f.wicketNum} className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/30 px-2 py-1">
@@ -320,7 +323,7 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                     <>
                       <div className={`border-t ${dividerColor}`} />
                       <div>
-                        <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>Partnerships</p>
+                        <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${accentText}`}>{t('match.partnerships')}</p>
                         <div className="space-y-1.5">
                           {(inn as any).partnerships.map((p: any, idx: number) => {
                             const b1 = inn.batterScores.find((bs: any) => bs.playerId === p.batsman1Id)?.player?.name ?? 'P1';
@@ -329,8 +332,8 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                               <div key={p.id} className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">{idx + 1}. {b1 === b2 ? b1 : `${b1} & ${b2}`}</span>
                                 <div className="flex items-center gap-3">
-                                  <span className="font-bold">{p.runs} runs</span>
-                                  <span className="text-muted-foreground">{p.balls} balls</span>
+                                  <span className="font-bold">{p.runs} {t('misc.runs')}</span>
+                                  <span className="text-muted-foreground">{p.balls} {t('match.balls').toLowerCase()}</span>
                                   <span className={p.isUnbroken ? 'text-cricket-green text-[10px]' : 'text-red-400 text-[10px]'}>{p.isUnbroken ? 'Active' : 'Broken'}</span>
                                 </div>
                               </div>
@@ -378,19 +381,19 @@ export default async function MatchDetailPage({ params }: { params: { id: string
                       <span className={`h-3 w-3 rounded-full ${isTeamA ? 'bg-blue-500' : 'bg-rose-500'}`} />
                       <span className="font-bold">{inn.battingTeam.name}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{overs.length} overs · {inn.totalRuns} runs</span>
+                    <span className="text-xs text-muted-foreground">{overs.length} {t('match.overs').toLowerCase()} · {inn.totalRuns} {t('match.runs').toLowerCase()}</span>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                        <th className="px-4 py-2">Over</th>
-                        <th className="px-2 py-2 text-right">Runs</th>
-                        <th className="px-2 py-2 text-right">Wkts</th>
-                        <th className="px-2 py-2 text-right">Extras</th>
-                        <th className="px-4 py-2 text-right">Total</th>
-                        <th className="px-4 py-2 text-left hidden sm:table-cell">Balls</th>
+                        <th className="px-4 py-2">{t('match.overs')}</th>
+                        <th className="px-2 py-2 text-right">{t('match.runs')}</th>
+                        <th className="px-2 py-2 text-right">{t('match.wickets')}</th>
+                        <th className="px-2 py-2 text-right">{t('match.extras')}</th>
+                        <th className="px-4 py-2 text-right">{t('match.total')}</th>
+                        <th className="px-4 py-2 text-left hidden sm:table-cell">{t('match.balls')}</th>
                       </tr>
                     </thead>
                     <tbody>

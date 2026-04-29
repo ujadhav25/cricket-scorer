@@ -7,6 +7,7 @@ import { getInitials } from '@/lib/utils';
 import ProfileEditForm from './ProfileEditForm';
 import { UserAvatar } from './UserAvatar';
 import SignOutButton from './SignOutButton';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { ShieldAlert } from 'lucide-react';
 
 export default async function SettingsPage() {
@@ -32,6 +33,16 @@ export default async function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
+
+      <Card className="max-w-lg">
+        <CardHeader><CardTitle className="text-base">Language</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Choose your preferred language for the app UI</p>
+            <LanguagePicker />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="max-w-lg">
         <CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader>

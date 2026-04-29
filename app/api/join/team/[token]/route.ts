@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getAuthSession } from '@/lib/api-helpers';
+import { getAuthSession, serverErrorResponse } from '@/lib/api-helpers';
 
 const JoinTeamSchema = z.object({
   name: z.string().min(1).max(100),
@@ -88,7 +88,6 @@ export async function POST(
 
     return NextResponse.json({ success: true, player: { id: player.id, name: player.name } });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return serverErrorResponse(error);
   }
 }

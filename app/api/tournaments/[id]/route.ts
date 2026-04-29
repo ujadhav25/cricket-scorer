@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 import {
   getAuthSession,
   unauthorizedResponse,
@@ -60,7 +61,7 @@ export async function PUT(
     const body = await req.json();
     const parsed = UpdateTournamentSchema.safeParse(body);
     if (!parsed.success) {
-      console.error('Tournament update validation error:', JSON.stringify(parsed.error.issues));
+      logger.warn('Tournament update validation error', { issues: parsed.error.issues });
       return badRequestResponse(parsed.error.message);
     }
 

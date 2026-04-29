@@ -311,6 +311,17 @@ model Partnership {
   @@index([inningsId])
 }
 
+model MatchReaction {
+  id        String   @id @default(cuid())
+  matchId   String
+  emoji     String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([matchId, emoji])
+  @@index([matchId])
+}
+
 model PushSubscription {
   id        String   @id @default(cuid())
   userId    String

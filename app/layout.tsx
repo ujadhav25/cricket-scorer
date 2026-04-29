@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
+import { cookies } from 'next/headers';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { Providers } from '@/components/Providers';
 import { Analytics } from '@/components/Analytics';
+import { LOCALES, type Locale } from '@/lib/i18n';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -72,6 +74,10 @@ export const viewport: Viewport = {
 const isProd = process.env.NODE_ENV === 'production';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = cookies();
+  const rawLocale = cookieStore.get('cric-locale')?.value as Locale | undefined;
+  const initialLocale: Locale = rawLocale && LOCALES.some((l) => l.code === rawLocale) ? rawLocale : 'en';
+
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen`}>
@@ -94,7 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         <Analytics />
         <ServiceWorkerRegistration />
-        <Providers>
+        <Providers initialLocale={initialLocale}>
           <Toaster>
             {children}
           </Toaster>

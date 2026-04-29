@@ -28,15 +28,17 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { AlertCircle, ShieldAlert } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
+import { useLocale } from '@/components/LocaleProvider';
+import type { TranslationKey } from '@/lib/i18n';
 
-const ORGANIZER_NAV = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/players', label: 'Players', icon: Users },
-  { href: '/teams', label: 'Teams', icon: Shield },
-  { href: '/matches', label: 'Matches', icon: Activity },
-  { href: '/tournaments', label: 'Tournaments', icon: Trophy },
-  { href: '/history', label: 'History', icon: History },
-  { href: '/settings', label: 'Settings', icon: Settings },
+const ORGANIZER_NAV: { href: string; key: TranslationKey; fallback: string; icon: React.ElementType }[] = [
+  { href: '/dashboard',   key: 'nav.dashboard',   fallback: 'Dashboard',   icon: LayoutDashboard },
+  { href: '/players',     key: 'nav.players',     fallback: 'Players',     icon: Users },
+  { href: '/teams',       key: 'nav.teams',       fallback: 'Teams',       icon: Shield },
+  { href: '/matches',     key: 'nav.matches',     fallback: 'Matches',     icon: Activity },
+  { href: '/tournaments', key: 'nav.tournaments', fallback: 'Tournaments', icon: Trophy },
+  { href: '/history',     key: 'nav.history',     fallback: 'History',     icon: History },
+  { href: '/settings',    key: 'nav.settings',    fallback: 'Settings',    icon: Settings },
 ];
 
 interface NavProps {
@@ -49,12 +51,12 @@ interface NavProps {
 function getNavItems(activeView: 'organizer' | 'player', playerId?: string | null, playerIncomplete?: boolean) {
   if (activeView === 'player') {
     return [
-      { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/dashboard', key: 'nav.dashboard' as TranslationKey, fallback: 'Dashboard', icon: LayoutDashboard },
       ...(playerId
-        ? [{ href: playerIncomplete ? `/players/${playerId}/edit` : `/players/${playerId}`, label: 'My Profile', icon: User }]
+        ? [{ href: playerIncomplete ? `/players/${playerId}/edit` : `/players/${playerId}`, key: 'nav.myprofile' as TranslationKey, fallback: 'My Profile', icon: User }]
         : []),
-      { href: '/history', label: 'History', icon: History },
-      { href: '/settings', label: 'Settings', icon: Settings },
+      { href: '/history',  key: 'nav.history' as TranslationKey, fallback: 'History',   icon: History },
+      { href: '/settings', key: 'nav.settings'  as TranslationKey, fallback: 'Settings',  icon: Settings },
     ];
   }
   return ORGANIZER_NAV;
@@ -155,6 +157,7 @@ export function MobileHeader({ activeView, isSuperAdmin }: { activeView: 'organi
 
 export function Sidebar({ activeView, playerId, playerIncomplete, isSuperAdmin }: NavProps) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const navItems = getNavItems(activeView, playerId, playerIncomplete);
 
   return (
@@ -177,7 +180,8 @@ export function Sidebar({ activeView, playerId, playerIncomplete, isSuperAdmin }
       )}
 
       <nav className="flex-1 space-y-1 p-3 pt-4">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, key, fallback, icon: Icon }) => {
+          const label = t(key) || fallback;
           const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
           const isLocked = playerIncomplete && !href.endsWith('/edit');
           return isLocked ? (

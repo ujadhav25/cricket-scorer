@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const { version } = require('./package.json');
+const { withSentryConfig } = require('@sentry/nextjs');
 
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -47,4 +48,27 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withSentryConfig(nextConfig, {
+  // Source map upload — set SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN in CI
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT ?? 'cricket-scorer',
+
+  // Suppress build-time output unless in CI
+  silent: !process.env.CI,
+
+  // Wider source map uploads for better stack traces
+  widenClientFileUpload: true,
+
+  // Hide source maps from the client bundle
+  hideSourceMaps: true,
+
+  // Tree-shake Sentry logger statements in production
+  disableLogger: true,
+
+  // Tunnel Sentry events through /api/monitoring to bypass adblockers
+  // (no external Sentry domain needed in CSP)
+  tunnelRoute: '/api/monitoring',
+
+  // Disable automatic Vercel Cron Monitors
+  automaticVercelMonitors: false,
+});

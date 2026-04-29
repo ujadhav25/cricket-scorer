@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
 import { History } from 'lucide-react';
+import { serverT } from '@/lib/locale';
 
 export default async function HistoryPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
+
+  const t = serverT();
 
   const matches = await prisma.match.findMany({
     where: { userId: session.user.id, status: 'COMPLETED' },
@@ -24,15 +27,15 @@ export default async function HistoryPage() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Match History</h1>
-        <p className="text-muted-foreground">{matches.length} completed matches</p>
+        <h1 className="text-2xl font-bold">{t('history.title')}</h1>
+        <p className="text-muted-foreground">{matches.length} {t('match.completed').toLowerCase()}</p>
       </div>
 
       {matches.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <History className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
-            <p className="font-semibold">No completed matches yet</p>
+            <p className="font-semibold">{t('history.noMatches')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -67,7 +70,7 @@ export default async function HistoryPage() {
                       </div>
                       {winner && (
                         <span className="rounded-full bg-cricket-green/20 px-2 py-0.5 text-xs font-medium text-cricket-green">
-                          {winner === 'Tie' ? 'TIE' : `${winner} won`}
+                          {winner === 'Tie' ? t('match.tied') : `${winner} ${t('match.won')}`}
                         </span>
                       )}
                     </div>

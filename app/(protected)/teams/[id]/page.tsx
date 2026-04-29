@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getInitials } from '@/lib/utils';
-import { Edit, UserPlus } from 'lucide-react';
+import { Edit, UserPlus, Swords } from 'lucide-react';
 import { TeamInviteButton } from '@/components/TeamInviteButton';
 import { RemovePlayerButton } from '@/components/RemovePlayerButton';
 
@@ -52,6 +52,25 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
       : (inn1.battingTeamId !== team.id ? inn1.totalRuns : inn2.totalRuns);
     return teamRuns > oppRuns;
   }).length;
+
+  // Build head-to-head records against each opponent
+  const opponentMap = new Map<string, { name: string; color: string; wins: number; losses: number; ties: number }>();
+  allMatches.filter((m) => m.status === 'COMPLETED').forEach((m) => {
+    const opp = m.isTeamA ? (m as any).teamB : (m as any).teamA;
+    if (!opp) return;
+    const existing = opponentMap.get(opp.id) ?? { name: opp.name, color: opp.color ?? '#888', wins: 0, losses: 0, ties: 0 };
+    const inn1 = m.innings.find((i: any) => i.inningsNumber === 1);
+    const inn2 = m.innings.find((i: any) => i.inningsNumber === 2);
+    if (inn1 && inn2) {
+      const myRuns = inn1.battingTeamId === team.id ? inn1.totalRuns : inn2.totalRuns;
+      const oppRuns = inn1.battingTeamId !== team.id ? inn1.totalRuns : inn2.totalRuns;
+      if (myRuns > oppRuns) existing.wins++;
+      else if (oppRuns > myRuns) existing.losses++;
+      else existing.ties++;
+    }
+    opponentMap.set(opp.id, existing);
+  });
+  const opponents = Array.from(opponentMap.entries()).sort((a, b) => (b[1].wins + b[1].losses + b[1].ties) - (a[1].wins + a[1].losses + a[1].ties));
 
   return (
     <div className="p-6 space-y-6">
@@ -134,6 +153,55 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
           )}
         </CardContent>
       </Card>
+      {/* Head-to-head */}
+      {opponents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Swords className="h-4 w-4 text-cricket-amber" />
+              Head-to-Head
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {opponents.map(([oppId, opp]) => {
+              const total = opp.wins + opp.losses + opp.ties;
+              const winPct = total > 0 ? Math.round((opp.wins / total) * 100) : 0;
+              return (
+                <div key={oppId} className="rounded-xl border border-border/60 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ backgroundColor: opp.color }}>
+                        {opp.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="text-sm font-semibold">vs {opp.name}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{total} match{total !== 1 ? 'es' : ''}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs mb-2">
+                    <div>
+                      <div className="text-lg font-black text-cricket-green">{opp.wins}</div>
+                      <div className="text-muted-foreground">Won</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-black text-red-400">{opp.losses}</div>
+                      <div className="text-muted-foreground">Lost</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-black text-cricket-amber">{opp.ties}</div>
+                      <div className="text-muted-foreground">Tied</div>
+                    </div>
+                  </div>
+                  {/* Win % bar */}
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-cricket-green transition-all" style={{ width: `${winPct}%` }} />
+                  </div>
+                  <div className="text-right text-[10px] text-muted-foreground mt-0.5">{winPct}% win rate</div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

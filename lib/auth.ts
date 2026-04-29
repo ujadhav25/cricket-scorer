@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import EmailProvider from 'next-auth/providers/email';
 import { prisma } from '@/lib/prisma';
 import { authConfig } from '@/lib/auth.config';
+import { logger } from '@/lib/logger';
 
 const providers = [
   GoogleProvider({
@@ -38,7 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           });
         } catch (e) {
-          console.error('[createUser] Failed to auto-create player:', e);
+          logger.error('[auth] Failed to auto-create player', e, { userId: user.id });
         }
       }
     },
