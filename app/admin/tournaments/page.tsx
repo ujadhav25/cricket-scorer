@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { adminAuth } from '@/lib/admin-auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
@@ -17,8 +17,8 @@ export default async function AdminTournamentsPage({
 }: {
   searchParams: { q?: string; page?: string };
 }) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') redirect('/dashboard');
+  const session = await adminAuth();
+  if (!(session as any)?.admin) redirect('/admin/login');
 
   const page = Math.max(1, Number(searchParams.page ?? 1));
   const search = searchParams.q ?? '';
@@ -72,7 +72,7 @@ export default async function AdminTournamentsPage({
                 {tournaments.map((t) => (
                   <tr key={t.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
-                      <Link href={`/tournaments/${t.id}`} className="font-medium hover:underline">{t.name}</Link>
+                      <Link href={`/admin/tournaments/${t.id}`} className="font-medium hover:underline hover:text-cricket-green transition-colors">{t.name}</Link>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">{t.format}</td>
                     <td className="px-4 py-3">

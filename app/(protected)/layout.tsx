@@ -14,19 +14,14 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   if (!session?.user?.id) redirect('/login');
   const userId = session.user.id;
 
-  const [user, roleRows] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true, email: true },
-    }),
-    prisma.$queryRaw<{ role: string }[]>`
-      SELECT role::text FROM "User" WHERE id = ${userId} LIMIT 1
-    `.catch(() => [] as { role: string }[]),
-  ]);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
 
   if (!user) redirect('/login');
 
-  const isSuperAdmin = roleRows[0]?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = false; // Admin portal is now separate (/admin/login)
 
   // ── Resolve the user's "self" player (first player owned by this user) ──
   let player = await prisma.player.findFirst({

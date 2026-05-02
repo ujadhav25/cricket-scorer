@@ -11,7 +11,11 @@ export const authConfig = {
   // trustHost is needed for Vercel proxy; set AUTH_URL to your canonical domain to prevent host-header injection.
   trustHost: process.env.AUTH_URL ? false : true,
   callbacks: {
-    authorized({ auth }) {
+    authorized({ auth, request }) {
+      const pathname = request.nextUrl.pathname;
+      // Admin routes use a completely separate auth system — let them pass through here.
+      // The custom middleware handles admin cookie validation for these paths.
+      if (pathname.startsWith('/admin')) return true;
       return !!auth?.user;
     },
   },

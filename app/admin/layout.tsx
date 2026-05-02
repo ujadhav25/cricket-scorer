@@ -1,5 +1,7 @@
-import { auth } from '@/lib/auth';
+import { adminAuth } from '@/lib/admin-auth';
+import { adminSignOut } from '@/lib/admin-auth';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
@@ -11,24 +13,33 @@ import {
   UserCircle,
   LogOut,
   ShieldAlert,
+  BarChart2,
 } from 'lucide-react';
 
 const NAV = [
-  { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { href: '/admin', label: 'Overview', icon: LayoutDashboard },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/players', label: 'Players', icon: UserCircle },
   { href: '/admin/teams', label: 'Teams', icon: Shield },
   { href: '/admin/matches', label: 'Matches', icon: Activity },
   { href: '/admin/tournaments', label: 'Tournaments', icon: Trophy },
+  { href: '/admin/admins', label: 'Admin Users', icon: ShieldAlert },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') {
-    redirect('/dashboard');
+  const pathname = headers().get('x-pathname') ?? '';
+
+  // Login page lives inside this layout directory but must not trigger auth check
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
   }
 
-  const userName = session.user.name ?? session.user.email ?? 'Admin';
+  const session = await adminAuth();
+  const admin = (session as any)?.admin;
+  if (!admin) redirect('/admin/login');
+
+  const adminName = admin.name ?? admin.email ?? 'Admin';
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -42,7 +53,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Logged-in identity */}
         <div className="px-3 py-2.5 border-b border-border/10">
           <p className="text-[11px] text-muted-foreground/60 mb-0.5">Logged in as</p>
-          <p className="text-xs font-medium truncate text-foreground/80">{userName}</p>
+          <p className="text-xs font-medium truncate text-foreground/80">{adminName}</p>
+          {admin.department && (
+            <p className="text-[10px] text-muted-foreground/50 truncate">{admin.department}</p>
+          )}
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
           {NAV.map(({ href, label, icon: Icon }) => (
@@ -57,13 +71,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           ))}
         </nav>
         <div className="p-2 border-t border-border/15 space-y-1">
-          <Link
-            href="/settings"
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium bg-cricket-green-500/10 text-cricket-green border border-cricket-green-500/20 hover:bg-cricket-green-500/15 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Settings
-          </Link>
+          <form action="/api/admin/auth/signout" method="POST">
+            <input type="hidden" name="callbackUrl" value="/admin/login" />
+            <button
+              type="submit"
+              className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -79,12 +96,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </Link>
             ))}
           </nav>
-          <Link
-            href="/settings"
-            className="ml-auto shrink-0 text-xs font-medium text-cricket-green border border-cricket-green-500/30 rounded-full px-2.5 py-1 hover:bg-cricket-green-500/10 transition-colors"
-          >
-            Settings
-          </Link>
+          <form action="/api/admin/auth/signout" method="POST" className="ml-auto shrink-0">
+            <input type="hidden" name="callbackUrl" value="/admin/login" />
+            <button
+              type="submit"
+              className="text-xs font-medium text-red-400 border border-red-500/30 rounded-full px-2.5 py-1 hover:bg-red-500/10 transition-colors"
+            >
+              Sign Out
+            </button>
+          </form>
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>

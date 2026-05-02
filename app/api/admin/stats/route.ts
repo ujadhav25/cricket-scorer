@@ -1,18 +1,10 @@
-import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-
-async function assertAdmin() {
-  const session = await auth();
-  if (!session?.user || (session.user as any).role !== 'SUPER_ADMIN') {
-    return null;
-  }
-  return session;
-}
+import { assertAdmin } from '@/lib/assert-admin';
 
 export async function GET() {
-  const session = await assertAdmin();
-  if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const admin = await assertAdmin();
+  if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const [
     totalUsers,

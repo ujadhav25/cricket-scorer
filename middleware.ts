@@ -47,6 +47,26 @@ export default auth((req: NextRequest & { auth: unknown }) => {
     return NextResponse.next();
   }
 
+  // ── Admin auth routes — always pass through (separate NextAuth instance) ─
+  if (pathname.startsWith('/api/admin/auth/')) {
+    const isAuthAction =
+      pathname.startsWith('/api/admin/auth/signin') ||
+      pathname.startsWith('/api/admin/auth/signout') ||
+      pathname.startsWith('/api/admin/auth/callback');
+    if (isAuthAction) {
+      const r = limiters.auth(ip);
+      if (!r.success) return tooManyRequests(r.retryAfter ?? 60);
+    }
+    return NextResponse.next();
+  }
+
+  // ── Admin login page — always accessible ─────────────────────────────────
+  if (pathname === '/admin/login') {
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-pathname', pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
   // ── Rate limiting for other API routes ───────────────────────────────
   if (pathname.startsWith('/api/')) {
     let result;
@@ -65,12 +85,16 @@ export default auth((req: NextRequest & { auth: unknown }) => {
     }
   }
 
-  // Admin routes — SUPER_ADMIN only
+  // Admin routes — check admin session cookie (separate from user auth)
   if (pathname.startsWith('/admin')) {
-    const user = (req as any).auth?.user;
-    if (!user || (user as any).role !== 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', req.nextUrl.origin));
+    const adminCookie = req.cookies.get('admin-session-token');
+    if (!adminCookie) {
+      return NextResponse.redirect(new URL('/admin/login', req.nextUrl.origin));
     }
+    // Admin cookie is valid — inject pathname header and pass through without regular user auth check
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-pathname', pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // Cast pages are public — no auth required
