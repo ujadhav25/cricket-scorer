@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/utils';
