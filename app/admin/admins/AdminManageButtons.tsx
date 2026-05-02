@@ -25,13 +25,14 @@ export function AdminManageButtons(props: Props) {
   const [error, setError] = useState('');
 
   if (props.mode === 'remove') {
+    const removeProps = props;
     function handleRemove() {
-      if (!confirm(`Remove admin access for ${props.adminEmail}?`)) return;
+      if (!confirm(`Remove admin access for ${removeProps.adminEmail}?`)) return;
       startTransition(async () => {
         const res = await fetch('/api/admin/admins', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: (props as RemoveProps).adminId }),
+          body: JSON.stringify({ id: removeProps.adminId }),
         });
         if (res.ok) router.refresh();
       });
