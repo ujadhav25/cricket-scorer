@@ -15,6 +15,12 @@ Sentry.init({
 
   // Only send events in production (set NEXT_PUBLIC_SENTRY_DSN to enable in dev)
   enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
+
+  // Filter out transient Fast Refresh / HMR errors from development
+  beforeSend(event) {
+    if (process.env.NODE_ENV !== 'production') return null;
+    return event;
+  },
 });
 
 // Required for Sentry to instrument client-side navigations
