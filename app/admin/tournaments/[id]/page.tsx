@@ -26,7 +26,7 @@ export default async function AdminTournamentDetailPage({ params }: { params: { 
     where: { id: params.id },
     include: {
       user: { select: { name: true, email: true } },
-      teams: { include: { team: true }, orderBy: { createdAt: 'asc' } },
+      teams: { include: { team: true } },
       matches: {
         include: {
           teamA: true,
