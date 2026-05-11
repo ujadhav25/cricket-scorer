@@ -73,6 +73,9 @@ export default auth((req: NextRequest & { auth: unknown }) => {
 
     if (pathname.startsWith('/api/join/')) {
       result = limiters.join(ip);
+      if (!result.success) return tooManyRequests(result.retryAfter ?? 60);
+      // Join routes are public — no auth required
+      return NextResponse.next();
     } else if (pathname.startsWith('/api/matches/') && pathname.endsWith('/ball')) {
       // Ball-by-ball scoring endpoint — highest allowed throughput
       result = limiters.scoring(ip);
