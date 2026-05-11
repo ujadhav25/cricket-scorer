@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-const { version } = require('./package.json');
 const { withSentryConfig } = require('@sentry/nextjs');
 
 const securityHeaders = [
@@ -27,9 +26,6 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  env: {
-    NEXT_PUBLIC_APP_VERSION: version,
-  },
   async headers() {
     return [
       {

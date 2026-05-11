@@ -17,7 +17,6 @@ export default async function AdminTeamDetailPage({ params }: { params: { id: st
       captainUser: { select: { name: true, email: true } },
       players: {
         include: { player: true },
-        orderBy: { createdAt: 'asc' },
       },
       matchesAsTeamA: {
         include: { teamB: true, innings: { select: { totalRuns: true, totalWickets: true, inningsNumber: true, battingTeamId: true } } },
