@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? 'https://cricscorer.co.in';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // regenerate at most once per hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
